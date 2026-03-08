@@ -1,0 +1,59 @@
+# DocumentFlow Suite — Source of Truth
+
+## Zero-Server Constraint
+
+**Document processing runs 99% in the user's browser.** This is non-negotiable.
+
+- **No uploads** — Document files never leave the device
+- **No server-side document storage** — No backend database or blob store for documents
+- **No persistent logging** — Document content is not logged or transmitted
+- **Data in RAM only** — Exists in JavaScript memory; garbage-collected when done
+- **HIPAA-friendly** — PII/sensitive documents never hit a 3rd-party server for processing
+
+*Backend (Supabase + Hono) is for license management and metadata only — never for document processing.*
+
+### v1.0 Feature Freeze (strict)
+
+- No .docx or .xlsx — keep the engine serverless and lightweight
+- No server-side document processing
+- No cloud storage for documents (S3, GCS, etc.)
+
+## Agnostic Pipeline Constraint
+
+**Tiered Input → Single Output** — Normalize into an in-memory "Canvas Object," then "staple" into a final PDF.
+
+| Tier | Formats |
+|------|---------|
+| 1 (Native) | JPG, PNG |
+| 2 (Mobile) | HEIC, HEIF |
+| 3 (Legacy) | TIFF, BMP |
+| 4 (PDF) | Existing PDFs (re-processing/merging) |
+
+- **Output**: Optimized, upright, 150-DPI PDF
+- **Engine**: pdf-lib (stitching), heic2any (conversion), browser-image-compression (DPI scaling)
+- **UI**: Lit (Web Components) — framework-agnostic, drop-in anywhere
+
+## Strategic Roadmap (Inside-Out)
+
+1. **Phase 1** — Internal utility (employee tool) for IGO fixes (rotation, merging, conversion)
+2. **Phase 2** — Intelligent Gateway in client-facing upload portals ("stop the mess at the door")
+3. **Phase 3** — Mobile UI for field agents
+
+## Definition of Done (v1.0 / Phase 1)
+
+- Employee can normalize and staple **5+ different image types** into a single optimized PDF
+- Visual reordering of pages before export
+- 150-DPI export
+
+## Stack
+
+- Monorepo: pnpm + Turborepo
+- Engine: Pure TypeScript
+- UI: Lit
+- Docs: Starlight (Astro)
+- Backend (metadata/license only): Supabase + Hono
+
+## Legal
+
+- Clean-room development — no copying proprietary implementations
+- Third-party deps used under their licenses only
