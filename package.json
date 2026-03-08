@@ -1,10 +1,15 @@
 {
   "name": "document-flow-suite",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
+  "description": "Privacy-first, client-side document triage utility",
   "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0"
   },
   "keywords": [],
   "author": "",

@@ -1,0 +1,25 @@
+{
+  "name": "@document-flow/ui-library",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "dev": "tsup src/index.ts --format esm --dts --watch"
+  },
+  "dependencies": {
+    "lit": "^3.2.2"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.9.3"
+  }
+}

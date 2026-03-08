@@ -1,4 +1,18 @@
-node_modules
-.turbo
-dist
+
+# Dependencies
+node_modules/
+.pnpm-debug.log
+.pnpm-store/
+
+# Build outputs
+dist/
+.turbo/
+out/
+build/
 .astro
+
+# IDE & System
+.vscode/
+.cursor/
+.DS_Store
+*.local
