@@ -1,34 +1,31 @@
 ---
 title: Product Overview
-description: DocumentFlow Suite - privacy-first document triage for HEIC, TIFF, PNG, and PDF.
+description: DocumentFlow Suite - turn messy uploads into standardized PDFs. Privacy-first, client-side.
 template: splash
 hero:
-  tagline: Turn messy files into optimized, upright 150-DPI PDFs—client-side.
+  tagline: Turn messy uploads into standardized PDFs—client-side.
   actions:
-    - text: Zero-Server Privacy
-      link: /security/
-      icon: right-arrow
     - text: Business Case
-      link: /roi/
+      link: /business-case/
+      icon: right-arrow
+    - text: Privacy & Compliance
+      link: /privacy-compliance/
       icon: document
       variant: minimal
 ---
 
 ## Solution Summary
 
-DocumentFlow Suite is a **privacy-first, client-side document triage utility** that takes messy files—HEIC, TIFF, PNG, PDF—and "staples" them into optimized, upright 150-DPI PDFs.
+DocumentFlow Suite is a **local-first, zero-server document triage system** that eliminates "NIGO" (Not In Good Order) documents. It transforms messy, unstandardized client uploads—sideways HEICs, low-res JPEGs, TIFFs—into professional, 150-DPI, upright PDFs. All processing happens in the user's browser memory. Nothing is sent to a server.
 
-All processing happens in the browser. Nothing is sent to a server.
+## Key Benefits
 
-## Business Benefits
+- **Efficiency** — Employees fix bad files in seconds instead of minutes; no more manual rotation, conversion, or re-saving
+- **Privacy** — Data stays in RAM; no uploads, no server storage, no persistent logging
+- **Cost Savings** — Reduce or eliminate Adobe Acrobat licenses; recover labor hours spent on document cleanup
 
-- **Reduce Adobe license costs** — Replace Acrobat for routine document fixes
-- **Recover labor** — Employees spend less time rotating, resizing, and re-saving files
-- **HIPAA-friendly** — Data stays in RAM; no server-side processing or storage
-- **Embed anywhere** — Drop the component into existing sites (Phase 2) or deploy as an internal tool (Phase 1)
+## Core Features
 
-## Roadmap
-
-1. **Phase 1 (Now)** — Internal employee utility to fix bad files and reduce Adobe license costs
-2. **Phase 2 (Future)** — Smart Gateway embedded in client-facing websites to fix uploads at the source
-3. **Phase 3 (Vision)** — Mobile-optimized tool for field workers
+- **Agnostic File Handling** — Accepts HEIC, HEIF, TIFF, BMP, JPEG, PNG, and PDF. Normalizes everything into a standard Canvas object before output.
+- **Visual Reordering** — Drag-and-drop page order before export. Merge multiple files into a single document.
+- **Auto-Optimization** — 150-DPI downsampling for web-ready viewing; output optimized for storage without losing text clarity.

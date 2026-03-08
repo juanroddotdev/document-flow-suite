@@ -1,5 +1,13 @@
 # DocumentFlow Suite — Source of Truth
 
+**Canonical reference:** [docs/context/FULL_PROJECT_MANIFESTO.md](docs/context/FULL_PROJECT_MANIFESTO.md)
+
+Every file in `apps/` or `packages/` must align with:
+- **The Agnostic Pipeline** — Input → Normalize to Canvas → Optimize (150-DPI) → Output (upright PDF)
+- **Phase 1: Internal Utility** — Employee tool for fixing bad files; normalization, stapling, optimization (< 5MB)
+
+---
+
 ## Zero-Server Constraint
 
 **Document processing runs 99% in the user's browser.** This is non-negotiable.
@@ -41,9 +49,9 @@
 
 ## Definition of Done (v1.0 / Phase 1)
 
-- Employee can normalize and staple **5+ different image types** into a single optimized PDF
-- Visual reordering of pages before export
-- 150-DPI export
+- **Normalization:** Any supported image type → upright, clean PDF page
+- **Stapling:** Multi-file merge into a single document (5+ types)
+- **Optimization:** Final output < 5MB, optimized for storage without losing text clarity
 
 ## Stack
 
