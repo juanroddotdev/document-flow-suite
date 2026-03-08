@@ -1,5 +1,5 @@
 {
-  "name": "manual",
+  "name": "@document-flow/manual",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
