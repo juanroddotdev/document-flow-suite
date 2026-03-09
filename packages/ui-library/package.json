@@ -13,13 +13,18 @@
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts",
-    "dev": "tsup src/index.ts --format esm --dts --watch"
+    "dev": "tsup src/index.ts --format esm --dts --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "lit": "^3.2.2"
   },
   "devDependencies": {
+    "@open-wc/testing": "^4.0.0",
+    "happy-dom": "^15.11.7",
     "tsup": "^8.3.5",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.6"
   }
 }

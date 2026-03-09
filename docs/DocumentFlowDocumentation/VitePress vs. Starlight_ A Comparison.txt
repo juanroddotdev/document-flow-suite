@@ -1,0 +1,50 @@
+Choosing between VitePress and Starlight comes down to whether you want a "sleek, specialized tool" or a "powerhouse Swiss Army knife."
+By 2026, both have matured into industry standards, but they cater to very different developer mentalities. Since you're building a modular component library, the choice impacts how easily you can "showcase" your components.
+1. VitePress: The Sleek Minimalist
+VitePress is built by the creators of Vue and Vite. It is designed to be the "successor to VuePress"—extremely fast, zero-config, and focused on simplicity.
+Pros:
+Speed: It is notoriously the fastest build tool in the game. It uses "Instant Server Start," so your edits show up almost before you finish typing.
+Vue Integration: If you like Vue, it’s a dream. You can use Vue components directly inside your Markdown files seamlessly.
+Search Included: It has an excellent built-in local search that requires zero configuration.
+Thematic Consistency: The default theme is beautiful and "professional" out of the box (used by the Vite and Vue core teams).
+Cons:
+Framework Lock-in: It is deeply tied to the Vue ecosystem. While you can use it for other things, you are essentially buying into the Vue way of doing things.
+Customization Friction: Because it aims for "zero-config," it can be surprisingly difficult to change the layout or add complex custom logic if you deviate from the default path.
+2. Starlight: The Versatile Powerhouse
+Starlight is a documentation framework built on top of Astro. In 2026, Astro is the king of "Islands Architecture," meaning it can mix and match different technologies in one site.
+Pros:
+Framework Agnostic: This is its superpower. You can render a React component, a Vue component, a Svelte component, and a Lit (Web Component) on the same page. This is perfect for your goal of selling a "White-Label" component to different companies.
+Performance: Astro strips out all unused JavaScript. Your manual will be lightning-fast because it only sends the code needed for that specific page.
+Scalability: Because it's built on Astro, you have access to a massive plugin ecosystem (Sitemaps, SEO, Image optimization).
+Built-in Design System: It handles "i18n" (multiple languages) and complex sidebars better than almost any other tool.
+Cons:
+Slightly Steeper Learning Curve: Because it’s more powerful, there are more concepts to understand (like "Astro Islands").
+Heavier Setup: It’s not "zero-config" in the same way VitePress is; you’ll spend a bit more time in the configuration file at the start.
+3. Direct Comparison Table
+Feature
+VitePress
+Starlight (Astro)
+Core Tech
+Vite + Vue 3
+Vite + Astro (Multi-framework)
+Component Support
+Vue only
+Any (React, Vue, Svelte, Lit)
+Setup Time
+Instant (Zero-Config)
+Quick (Guided CLI)
+Customizability
+Medium (Theming can be rigid)
+High (Theming is very flexible)
+Future-Proofing
+High (Backed by Vue core team)
+Highest (Framework-independent)
+Search
+Built-in (Local)
+Built-in (Pagefind - industry leading)
+4. Which one is "Zero Tech Debt"?
+For your specific project—where you want to build components that you might sell to companies using different tech stacks—Starlight is the winner.
+If you use VitePress, your "Manual" becomes a Vue site. If a potential client uses React, they might wonder if your component works for them. If you use Starlight, you can literally have a "Demo" page where the user clicks a button to see your component running in React, then click another to see it in Vue.
+The Verdict: * Use VitePress if you want to get your personal manual online today and you just want it to be simple and clean.
+Use Starlight if you want to build a "Product Showcase" that proves your tool works across the entire industry.
+Would you like me to show you how a "Starlight" folder structure looks, so you can see how you'd organize those Markdown files we discussed earlier?

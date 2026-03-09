@@ -1,0 +1,46 @@
+That is a very fair point. "Trust Engine" sounds like "Dev Speak." If you are handing this to a Director of Operations or a non-technical business owner, you want headers that sound like a solution to their problems, not a component of a machine.
+The goal is to make the External manual look like a polished product marketing site and the Internal manual look like an Engineering "Blueprints" folder.
+The Master Table of Contents
+Part 1: The External Manual (The Product Suite)
+Target Audience: Clients, Stakeholders, and Decision-Makers.
+1. Product Overview
+Solution Summary: Turning messy uploads into standardized PDFs.
+Key Benefits: Efficiency, Privacy, and Cost Savings.
+Core Features: Agnostic File Handling, Visual Reordering, and Auto-Optimization.
+2. The Business Case
+Cost Comparison: The "Adobe vs. DocumentFlow" breakdown.
+ROI Calculator: Interactive tool to estimate annual savings.
+Workflow Impact: How we reduce "back-and-forth" with clients over bad files.
+3. Privacy & Compliance
+Zero-Server Processing: Why your data never leaves the browser.
+Compliance Standards: HIPAA and SOC2 friendly architecture.
+Data Security FAQ: Common security questions for IT departments.
+4. Integration & Support
+Implementation Guide: Dropping the component into your existing site.
+Browser Extension: How to use the tool as a workflow overlay.
+Contact & Licensing: How to get started and technical support tiers.
+Part 2: The Internal Manual (The Architect’s Vault)
+Target Audience: You (The Founder/Lead Dev).
+1. Project Governance
+Legal Shielding: LLC formation status and IP Ownership notes.
+Employment Review: Status of "Moonlighting" checks and contract clauses.
+Feature Freeze: The "Definition of Done" for v1.0.
+2. Engineering Blueprints
+The Normalization Pipeline: Tech specs for HEIC/TIFF/PDF processing.
+Monorepo Structure: Map of the pnpm workspace and package linking.
+Memory Guardrails: Managing browser RAM limits during heavy processing.
+3. Development Operations (DevOps)
+Deployment Pipeline: How to push updates to the manual and the app.
+Backend Orchestration: Supabase schema, Auth logic, and API routes.
+Tech Debt Log: Known "hacks" to be fixed in v2.0.
+4. Business Strategy & Outreach
+The "Company B" List: Target companies for external sales.
+Pitch Scripts: Cold outreach templates for LinkedIn.
+Pricing Strategy: Trial tiers vs. Enterprise licensing.
+Why this works for a "Non-Finisher"
+Small Wins: You can complete the "Product Overview" in the External manual even if the "Memory Guardrails" code isn't written yet.
+Clear Transitions: When you finish a technical part in the Internal section, your "reward" is writing the polished version in the External section.
+The "Vibe": The External manual feels like you already have a successful company, which provides the motivation to make the Internal code match that reality.
+One final "Completion-Proof" thought:
+To keep from getting overwhelmed, we should probably add a "Phase 1: Minimum Viable Manual" marker. This means you don't fill out every single page above before you start; you just fill out the "Core 3" in each section to get the foundation solid.
+Does this T.O.C. cover the "Agnostic" vision you have, or should we add a specific section for "Mobile/Field Worker" use cases? (Since phone photos are a huge part of your "Agnostic" input need).

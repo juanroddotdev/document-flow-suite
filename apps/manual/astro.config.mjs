@@ -22,6 +22,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Project Governance', slug: 'internal/project-governance' },
 						{ label: 'Engineering Blueprints', slug: 'internal/engineering-blueprints' },
+						{ label: 'Testing', slug: 'internal/testing' },
 						{ label: 'DevOps', slug: 'internal/devops' },
 						{ label: 'Business Strategy', slug: 'internal/business-strategy' },
 					],

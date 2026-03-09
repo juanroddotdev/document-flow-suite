@@ -9,7 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@document-flow/pdf-engine": "workspace:*"
+    "@document-flow/pdf-engine": "workspace:*",
+    "@document-flow/ui-library": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",

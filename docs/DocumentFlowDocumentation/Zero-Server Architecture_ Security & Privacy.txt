@@ -1,0 +1,37 @@
+This page is arguably the most important part of your External Manual. In the financial and retirement sector, "How do you handle the data?" is the first question you'll be asked.
+By framing your architecture as "Privacy-by-Design," you turn a technical choice (processing in the browser to save server costs) into a massive competitive advantage.
+Security & Privacy: The "Zero-Server" Architecture
+The DocumentFlow Suite is built on a Client-Side First philosophy. Unlike traditional document conversion services that require files to be uploaded to a remote server for processing, DocumentFlow performs all operations locally within the user's web browser session.
+1. The Local Processing Boundary
+When a user selects a file for triage, the data is loaded into the browser’s volatile memory (RAM).
+No Intermediate Storage: Files are never written to a temporary disk or cloud "staging" area during conversion.
+Encryption in Transit: Since the "transfer" happens from the user's hard drive to the user's RAM, the data never crosses the open internet for the purpose of processing.
+Volatile Session: As soon as the browser tab is closed, the memory is cleared. No "residue" of the document remains.
+2. Comparison of Security Models
+Feature
+Traditional Cloud Converters
+DocumentFlow Suite
+Data Location
+Processed on 3rd Party Servers
+Processed on Local Machine
+Data Retention
+Often stored for 24-48 hours
+Instantaneous (RAM only)
+PII Exposure
+High Risk (Data in transit/rest)
+Zero Risk (Data never leaves)
+Compliance
+Requires complex BAA/SOC2 audits
+Inherently HIPAA/SOC2 friendly
+3. Technical Safeguards
+To maintain this high level of security, the suite utilizes the following browser-native technologies:
+Web Workers: Heavy processing (like HEIC-to-PDF conversion) is handled in a background thread. This keeps the UI responsive while ensuring the file data is isolated from the main window's global scope.
+Subresource Integrity (SRI): All cryptographic and PDF libraries are loaded with SRI hashes, ensuring that the code running in the browser has not been tampered with or injected with malicious scripts.
+Content Security Policy (CSP): The tool is designed to run under strict CSP headers, preventing the "leaking" of data to unauthorized external domains.
+4. Regulatory Alignment
+By keeping data local, DocumentFlow simplifies the burden of compliance for your organization:
+GDPR/CCPA: Since no data is "collected" or "stored," many of the typical data-at-rest requirements are bypassed.
+GLBA (Gramm-Leach-Bliley Act): Supports the protection of non-public personal information by ensuring it is not transmitted to unverified third-party processing nodes.
+Why IT Departments Love This
+Most "Shadow IT" (employees using random websites to convert PDFs) is a nightmare for security officers. DocumentFlow provides a sanctioned, secure alternative that keeps company data inside the corporate perimeter.
+Would you like me to draft the "ROI & Cost Savings" page next? This will include the math we discussed earlier, presented in a way that helps a department head justify the "buy" decision.

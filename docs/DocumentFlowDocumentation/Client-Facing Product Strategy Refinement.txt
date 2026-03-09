@@ -1,0 +1,35 @@
+This is a significant strategic shift that actually simplifies your path to a finished product. By moving the "User" from the Employee to the Client (The Participant), you are moving the tool to the "Front of the House."
+Instead of an employee fixing a mess that already arrived, you are providing a "Smart Gateway" that prevents the mess from ever being created. This is a much easier sell to a company because it directly improves the Customer Experience (CX).
+1. The "Client-Facing" Strategy
+In your manual, we will frame this as The Intelligent Upload Portal.
+Current Reality: Client takes a blurry, sideways photo of a 401k statement on their iPhone (HEIC), uploads it, and it sits in a queue for 3 days before an employee realizes they can't open it.
+Your Solution: The client goes to the company site. Your component opens. As they upload, the tool says: "Checking your file... Done! We've optimized this for our records. Please make sure the pages are in the right order." The result: The company receives a perfect, 150 DPI, upright PDF. The employee does zero work.
+2. Updated Table of Contents (The "Client-First" Polish)
+Let’s refine the External Manual to reflect this "Client-Facing" focus, while keeping the Mobile/Field Worker as a Phase 2 expansion.
+External Manual (The Product Suite)
+1. The Intelligent Gateway
+Self-Service Document Prep: Empowering clients to submit "ready-to-process" files.
+Real-Time Optimization: How the tool fixes rotation and format issues before the upload button is clicked.
+The "One-Click" Experience: No apps for the client to download; it just works in their mobile browser.
+2. Business Value
+Reducing "NIGO" (Not In Good Order): How to eliminate the #1 cause of processing delays.
+Customer Friction Reduction: Giving clients a professional tool that makes their lives easier.
+3. Mobile & Field Expansion (Phase 2)
+Remote Submission: Tailored UI for field agents or contractors submitting documents from the road.
+Offline-Ready (Future): Previewing the tech for low-connectivity environments.
+3. Adding the "Mobile/Field Worker" to the Internal Plan
+Even if you aren't building it first, you need to "plan for the space" in your code so you don't have to rewrite it later.
+Internal Manual: Engineering Blueprints
+Mobile UX Constraints: Planning for touch-targets (buttons big enough for thumbs) and low-bandwidth uploads.
+Camera Integration API: Researching how to trigger the "Take Photo" vs "Upload File" prompt in mobile Safari/Chrome.
+4. Why this makes the project "Completion-Proof"
+When a project is "Internal-only," it’s easy to let it slide because "we can just keep doing it the old way." But when you frame this as a Client-Facing Feature, it becomes a Revenue Generator and a Brand Improver.
+The "Finish Line" becomes: "A client can upload a document without an employee getting involved." That is a very clear, very satisfying goal.
+5. Finalizing the Plan Layout
+We now have:
+A Dual-Manual Structure (Internal/External).
+A Client-Facing Focus (The Smart Gateway).
+An Agnostic Pipeline (The Engine).
+A Roadmap (v1: Client Web Portal -> v2: Mobile/Field Worker).
+Does this feel like a "Life-Proof" plan that accounts for your tendency to move on to new ideas? (By making the first version a Client-Facing Gateway, you get to the "Success" part much faster).
+If so, would you like to define the "Success Criteria" for Version 1.0 (The Client Gateway) so we can lock in the "Definition of Done"?

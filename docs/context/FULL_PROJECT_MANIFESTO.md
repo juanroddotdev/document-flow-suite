@@ -52,3 +52,20 @@ We utilize a two-phase rollout to ensure immediate ROI and "Completion-Proof" de
 - **Normalization:** Any supported image type becomes an upright, clean PDF page.
 - **Stapling:** Multi-file merge into a single document.
 - **Optimization:** Final output is optimized for storage without losing text clarity.
+
+## VI. Context Docs
+
+Organized reference documents (merged from `docs/DocumentFlowDocumentation/` discussions). Use these to stay on track and onboard quickly.
+
+| Doc | Description |
+|-----|-------------|
+| [STRATEGY_AND_ROADMAP.md](STRATEGY_AND_ROADMAP.md) | Phased rollout, completion-proof planning, client-facing strategy. |
+| [MANUAL_STRUCTURE_AND_TOC.md](MANUAL_STRUCTURE_AND_TOC.md) | Dual-manual structure, master TOC, external overview draft. |
+| [ROI_AND_BUSINESS_CASE.md](ROI_AND_BUSINESS_CASE.md) | Adobe tax, labor recovery, NIGO impact, 3-year projection. |
+| [ZERO_SERVER_SECURITY_PRIVACY.md](ZERO_SERVER_SECURITY_PRIVACY.md) | Zero-server architecture, compliance, IT-facing security. |
+| [TECH_ARCHITECTURE_AND_SCOPE.md](TECH_ARCHITECTURE_AND_SCOPE.md) | Stack, monorepo map, Definition of Done, weekend setup. |
+| [AGNOSTIC_INPUT_PIPELINE.md](AGNOSTIC_INPUT_PIPELINE.md) | Input tiers, normalization, feature freeze, universal dropzone. |
+| [INTEGRATION_IMPLEMENTER_GUIDE.md](INTEGRATION_IMPLEMENTER_GUIDE.md) | Deployment options, three-step drop-in, implementation checklist. |
+| [LEGAL_AND_IP.md](LEGAL_AND_IP.md) | PIIA/moonlighting, LLC, licensing, Company B outreach. |
+| [SALES_AND_OUTREACH.md](SALES_AND_OUTREACH.md) | Elevator pitch, objections, pilot program, marketing checklist. |
+| [DOCS_TOOLING_STARLIGHT.md](DOCS_TOOLING_STARLIGHT.md) | Why Starlight (VitePress vs. Starlight comparison). |

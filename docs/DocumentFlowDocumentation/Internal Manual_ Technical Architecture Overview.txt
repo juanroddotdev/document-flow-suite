@@ -1,0 +1,27 @@
+This section of the Internal Manual is the "Source of Truth" for your codebase. It ensures that even if you take a break for two weeks, you can come back and understand exactly where everything lives and how it fits together.
+By using a Monorepo, you are treating your code like a set of Lego bricks. Each piece is independent, making it much harder to create "spaghetti code" that eventually leads to technical debt.
+Internal Manual: Section 1.2 — Technical Architecture
+I. The Monorepo Structure (pnpm + Turborepo)
+We use a workspace-based approach to separate the "Engine" (Logic) from the "Skin" (UI).
+Plaintext
+/document-flow-suite├── /apps│   ├── /manual          <-- [Starlight] The External Manual you just drafted│   └── /utility-v1      <-- [Vite + TS] The Internal Employee Tool (The App)├── /packages│   ├── /pdf-engine      <-- [Pure TS] The "Agnostic Pipeline" logic (Zero UI)│   ├── /ui-library      <-- [Lit] The draggable tabletop, buttons, and icons│   └── /shared-configs  <-- ESLint, Prettier, and TypeScript base rules├── turbo.json           <-- Build pipeline orchestration└── pnpm-workspace.yaml  <-- Defines the package boundaries
+II. The "Agnostic Pipeline" Flow (Internal Logic)
+To ensure Version 1.0 is stable, we follow a strict data flow. No raw files should ever touch the "Stapler" (PDF Generator) directly. They must go through the Normalizer.
+Ingestion: User drops a file (HEIC, TIFF, PNG, etc.).
+Normalization: A Worker thread converts the file into a standardized Bitmap/Canvas object.
+The State: The app stores a list of these objects in the "Tabletop" state.
+Transformation: Any user action (Rotate/Reorder) updates the metadata of the object in the state.
+Composition: On export, the pdf-engine takes the objects, applies the transformations, and "paints" them into the final PDF.
+III. Dependency Guardrails
+To keep the project "Completion-Proof," we strictly limit the libraries we use. If a library is added, it must be documented here.
+PDF Generation: pdf-lib (Low-level, client-side manipulation).
+Image Handling: heic2any (for Apple formats) and canvas API (for native browser scaling).
+UI Framework: Lit (to ensure the components can be moved to any framework in Phase 2).
+IV. Technical "Debt" Log (The "Do Not Fix Yet" List)
+To reach the finish line, we are intentionally allowing the following "Controlled Debt" in v1.0:
+Local State Only: If the user refreshes the page, they lose their progress. (Fix in Phase 2 with Supabase/LocalDB).
+Synchronous Processing: We will start with a single-thread model. If 50+ images cause lag, we move to Web Workers only after the first successful demo.
+Minimalist Styling: Use standard system fonts and a CSS framework like Tailwind to avoid hours of custom CSS work.
+Why this structure prevents "The Wall":
+If you get bored with the UI, you can spend a day working on the "Engine" package. If the math in the Engine gets too heavy, you can switch to the "Manual" or the "UI Library." You have different "rooms" to work in, which keeps your brain engaged without losing overall momentum.
+Would you like me to draft the next Internal page: "1.3 The Legal & Employment Shield"? (This covers the moonlighting checks and LLC formation notes we discussed to ensure you own the code).

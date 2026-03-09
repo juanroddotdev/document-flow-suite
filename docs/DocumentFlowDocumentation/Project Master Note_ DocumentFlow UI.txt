@@ -1,0 +1,38 @@
+Yes. I have archived our entire strategy session. Below is a comprehensive "Project Master Note" that groups our discussions into logical pillars. This ensures that as you move into the "Internal Manual" phase, you have a clear blueprint to follow.
+Project Meeting Notes: "DocumentFlow UI"
+Project Objective: Build a privacy-first, agnostic document triage utility to eliminate Adobe license overhead and manual file cleanup.
+1. The Strategic Roadmap ("Inside-Out" Model)
+To ensure project completion and business viability, we are following a phased rollout:
+Phase 1: Internal Utility (Employee Tool): A standalone web tool or extension for staff to fix "In Good Order" (IGO) issues (rotation, merging, conversion) instantly.
+Phase 2: The Intelligent Gateway (Client-Facing): Integrating the tool into public-facing upload portals to "stop the mess at the door."
+Phase 3: Field Expansion: Specialized mobile UI for field agents and remote workers.
+2. Technical Architecture (The "Zero-Debt" Stack)
+The system is designed to be framework-agnostic and cost-effective (running 99% in the user's browser).
+Monorepo Foundation: pnpm + Turborepo for speed and modularity.
+The Engine (Logic): Pure TypeScript using pdf-lib for stitching, heic2any for conversion, and browser-image-compression for DPI scaling (150 DPI target).
+The UI (Components): Lit (Web Components) to ensure the tool can be dropped into any site (React, Angular, or legacy HTML).
+Backend (Orchestration): Supabase (Auth/Database) + Hono (Edge API) for license management and metadata.
+Documentation: Starlight (Astro) for a high-performance, Markdown-based manual.
+3. The "Agnostic" Input Standard
+Instead of chasing individual file types, the tool uses a Tiered Pipeline:
+Tier 1 (Native): Web-ready images (JPG, PNG).
+Tier 2 (Mobile): Apple/Android formats (HEIC, HEIF).
+Tier 3 (Legacy): Office/Fax formats (TIFF, BMP).
+Tier 4 (PDF): Existing PDFs for re-processing/merging.
+The Goal: Everything is normalized into an in-memory "Canvas Object" before being "stapled" into a final PDF.
+4. Documentation Strategy: The Dual-Manual
+To combat "project abandonment," the documentation is split into two distinct areas:
+Internal (Architect's Vault): * Contents: Legal/LLC planning, "Moonlighting" checks, tech debt logs, and the "Definition of Done."
+Purpose: Private space for raw engineering and personal milestones.
+External (Product Suite):
+Contents: ROI Calculator, Security/Privacy Model (Zero-Server Processing), and Integration Guides.
+Purpose: A polished, public-facing sales and support site.
+5. Key Business Value Propositions (ROI)
+Direct Savings: Eliminating ~$288/year per user in Adobe Acrobat licenses.
+Labor Recovery: Saving ~15 minutes per document by automating rotation and conversion.
+NIGO Reduction: Preventing "Not In Good Order" submissions by fixing files at the point of upload.
+Security: HIPAA-friendly because PII/Sensitive documents never leave the client's RAM to be processed on a 3rd party server.
+Clarifications & Decisions
+Feature Freeze for v1.0: Focus strictly on Visual Document Triage. No support for .docx or .xlsx to keep the engine serverless and lightweight.
+The "Finish Line": Completion of Phase 1 (Internal Tool) is reached when an employee can normalize and staple 5+ different image types into a single optimized PDF.
+Would you like me to take this summary and format it into the actual "Project Overview" page for your External Manual? (This would give you your first finished "Public" page).

@@ -1,0 +1,35 @@
+Here is the first official draft for your External Manual. It’s written to be professional, confident, and "Public-Friendly," focusing on the value to the organization rather than the raw code.
+1. Project Overview: The DocumentFlow Suite
+The DocumentFlow Suite is a high-performance, privacy-first utility designed to bridge the gap between "Raw Customer Uploads" and "Record-Ready Documents." By moving the complex work of file normalization and optimization directly into the browser, we eliminate the need for expensive desktop software and high-latency server processing.
+The Problem: The "Friction Tax"
+Modern organizations lose thousands of hours annually to "NIGO" (Not In Good Order) documents.
+Format Fatigue: Employees struggle with HEIC (iPhone), TIFF, and massive JPEG files.
+Manual Cleanup: Staff must manually rotate, reorder, and shrink files using Adobe Acrobat.
+Licensing Overhead: Maintaining enterprise licenses for simple document "stapling" is a significant cost center.
+The Solution: Agnostic Document Triage
+DocumentFlow provides a Smart Gateway that handles the heavy lifting before a document ever hits the database.
+Format Agnostic: Handles everything from modern mobile photos to legacy fax formats.
+Zero-Server Processing: Document data is processed entirely in the user’s RAM. Sensitive financial information never leaves the local machine, ensuring inherent compliance with HIPAA and data privacy standards.
+Auto-Optimization: Automatically scales images to a standard 150 DPI, ensuring files are small enough for storage but crisp enough for legal records.
+2. Strategic Roadmap
+We are following an "Inside-Out" development cycle to ensure the engine is battle-tested by professionals before being opened to the public.
+Phase
+Milestone
+Focus
+Phase 1
+Internal Utility
+A power-tool for employees to fix existing "bad" files in seconds.
+Phase 2
+Intelligent Gateway
+A client-facing portal that fixes files during the upload process.
+Phase 3
+Field Mobility
+Optimized touch-interfaces for agents and contractors in the field.
+3. Core Capabilities
+Intelligent Stitching: Merge multiple different file types into a single, linearized PDF.
+Visual Reordering: A drag-and-drop "Tabletop" interface to fix out-of-sequence pages.
+Instant Normalization: Automatic correction of photo orientation (fixing sideways/upside-down uploads).
+Legacy Support: Built-in adapters for TIFF and BMP formats common in financial services.
+Next Step for the Manual
+This Overview serves as the "Front Door" of your documentation. It tells a visitor exactly what this is and why it matters.
+Would you like me to draft the "Security & Privacy" page next? (This is where we explain the Zero-Server/RAM-only logic in a way that makes an IT Security Officer feel comfortable approving your tool).
