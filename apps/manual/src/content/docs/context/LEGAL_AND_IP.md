@@ -1,0 +1,1 @@
+../../../../../../docs/context/LEGAL_AND_IP.md

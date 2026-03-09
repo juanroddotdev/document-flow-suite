@@ -1,3 +1,8 @@
+---
+title: Strategy and Roadmap
+description: Phased rollout, completion-proof planning, and client-facing focus.
+---
+
 # Strategy and Roadmap
 
 Context document for DocumentFlow Suite: strategic vision, phased rollout, completion-proof planning, and client-facing focus. Merged from Project Master Note, Inside-Out Product Rollout, Client-Facing Product Strategy Refinement, and Planning a Completion-Proof Project.

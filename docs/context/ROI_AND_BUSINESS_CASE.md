@@ -1,3 +1,8 @@
+---
+title: ROI and Business Case
+description: Adobe tax, labor recovery, NIGO impact, 3-year projection.
+---
+
 # ROI and Business Case
 
 Context document for DocumentFlow Suite: business case for decision-makers. Merged from DocumentFlow ROI and Business Case.

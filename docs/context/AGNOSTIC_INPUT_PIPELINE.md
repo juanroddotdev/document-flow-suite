@@ -1,3 +1,8 @@
+---
+title: Agnostic Input Pipeline
+description: Input tiers, normalization strategy, and feature freeze.
+---
+
 # Agnostic Input Pipeline
 
 Context document for DocumentFlow Suite: input tiers, normalization strategy, and feature freeze. Merged from Agnostic Input Pipeline Strategy.

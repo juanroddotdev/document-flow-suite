@@ -1,3 +1,8 @@
+---
+title: Sales and Outreach
+description: Elevator pitch, objections, pilot program, and marketing checklist.
+---
+
 # Sales and Outreach
 
 Context document for DocumentFlow Suite: Phase 1 sales, elevator pitch, objections, and pilot. Merged from Productizing a Side Project.

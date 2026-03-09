@@ -1,3 +1,8 @@
+---
+title: Zero-Server Security & Privacy
+description: Client-side processing, compliance, and technical safeguards.
+---
+
 # Zero-Server Architecture: Security & Privacy
 
 Context document for DocumentFlow Suite: security and privacy narrative for the External Manual and IT/security audiences. Merged from Zero-Server Architecture – Security & Privacy.

@@ -1,3 +1,8 @@
+---
+title: Manual Structure and TOC
+description: Dual-manual strategy, master TOC, and external overview.
+---
+
 # Manual Structure and Table of Contents
 
 Context document for DocumentFlow Suite: dual-manual strategy, master TOC, and external manual overview. Merged from Manual Structure for Product & Engineering, DocumentFlow External Manual Draft, and Dual Manual Structure For Project Completion.

@@ -1,3 +1,8 @@
+---
+title: Full Project Manifesto
+description: DocumentFlow Suite — strategic vision, roadmap, and success criteria.
+---
+
 # DocumentFlow Suite — Full Project Manifesto
 
 ## I. The Strategic Vision

@@ -1,0 +1,1 @@
+../../../../../../docs/context/FULL_PROJECT_MANIFESTO.md

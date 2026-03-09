@@ -1,3 +1,8 @@
+---
+title: Docs Tooling — VitePress vs. Starlight
+description: Why Starlight was chosen for the manual.
+---
+
 # Docs Tooling: VitePress vs. Starlight
 
 Context document for DocumentFlow Suite: why Starlight was chosen for the manual. Merged from VitePress vs. Starlight – A Comparison.

@@ -1,3 +1,8 @@
+---
+title: Tech Architecture and Scope
+description: Zero-debt stack, monorepo, Definition of Done, and setup.
+---
+
 # Tech Architecture and Scope
 
 Context document for DocumentFlow Suite: zero-debt stack, monorepo structure, Definition of Done, and setup. Merged from Tech Stack for Document Flow Suite, Zero-Debt Full Stack Architecture, Defining Project Scope and Architecture, Internal Manual Technical Architecture, and Setting Up Your Monorepo Foundation.

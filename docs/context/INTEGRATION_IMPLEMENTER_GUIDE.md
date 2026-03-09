@@ -1,3 +1,8 @@
+---
+title: Integration & Implementer's Guide
+description: Deployment options, three-step drop-in, and checklist.
+---
+
 # Integration and Implementer's Guide
 
 Context document for DocumentFlow Suite: deployment options and technical integration for IT and implementers. Merged from DocumentFlow Integration – The Implementer's Guide.

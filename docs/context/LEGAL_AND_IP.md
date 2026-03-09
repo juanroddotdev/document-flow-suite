@@ -1,3 +1,8 @@
+---
+title: Legal and IP Shield
+description: PIIA, moonlighting, LLC, licensing, and Company B outreach.
+---
+
 # Legal and IP Shield
 
 Context document for DocumentFlow Suite: IP protection, entity formation, licensing, and outreach. Merged from Legal Shield for Side Projects.

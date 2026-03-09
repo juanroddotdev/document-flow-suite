@@ -1,0 +1,1 @@
+../../../../../../docs/context/TECH_ARCHITECTURE_AND_SCOPE.md
