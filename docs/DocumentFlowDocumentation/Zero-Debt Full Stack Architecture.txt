@@ -1,0 +1,45 @@
+Building a backend in 2026 is no longer about managing servers; it’s about orchestrating services. Since your tool is "Client-Side First," your backend should stay lean, primarily focusing on User Auth, Metadata Storage, and AI-Ready API layers.
+Here is the complete "Zero-Debt" Full Stack (Frontend + Backend + Manual) for your project.
+1. The Backend Stack: "The Autopilot"
+To keep costs near zero while you're in development, we use a Backend-as-a-Service (BaaS) approach.
+Database & Auth: Supabase
+Why: It’s built on PostgreSQL (the most future-proof database). It handles user logins, file metadata, and security rules (RLS) out of the box. If you ever outgrow Supabase, you can export your data to any standard Postgres server.
+API Layer: Hono
+Why: It’s a 14KB ultra-lightweight framework that runs on the "Edge" (Cloudflare Workers). It’s faster than Express and has native TypeScript support. You'll use this for things like "Generating a license key" or "Sending an email."
+Storage: Supabase Storage (or Cloudflare R2)
+Why: To store the final PDFs if users want to "Save to Cloud."
+2. The Integrated Architecture (2026 Edition)
+Plaintext
+/document-flow-suite├── /apps│   ├── /manual           <-- [Starlight] Your Markdown docs & Sales site│   ├── /dashboard        <-- [Next.js] Where customers manage their license keys│   └── /api              <-- [Hono] The "Brain" for Auth & Billing├── /packages│   ├── /ui-components    <-- [Lit] The draggable tabletop, rotate buttons│   ├── /pdf-engine       <-- [Vanilla TS] The image-to-PDF logic│   └── /database-schema  <-- [Supabase] Your SQL definitions & migrations├── pnpm-workspace.yaml└── turbo.json
+3. The Comprehensive Tech Stack Summary
+Layer
+Recommended Technology
+Why it's "Zero-Debt"
+Manual
+Starlight (Astro)
+Content is just Markdown; host it anywhere.
+Components
+Lit (Web Components)
+Native browser support; works in any framework.
+Logic Engine
+TypeScript + pdf-lib
+Pure logic; not tied to a specific UI or server.
+Database
+PostgreSQL (via Supabase)
+Industry standard; no vendor lock-in.
+Auth
+Supabase Auth
+Standard JWT-based; easy to migrate later.
+API Server
+Hono
+Runs on any runtime (Node, Bun, Cloudflare).
+Package Mgmt
+pnpm + Turborepo
+Blazing fast; standard for professional monorepos.
+4. Why this Backend is perfect for your "Side Business"
+Cost: The "Free Tiers" for Supabase and Cloudflare Workers are so generous that you likely won't pay a cent until you have dozens of paying customers.
+Compliance: Because you handle retirement funds, Supabase's Row Level Security (RLS) is a life-saver. You can write one line of SQL to ensure that User A can never even see the metadata for User B's files.
+Portability: If you decide to sell the whole company, the new owner just takes over the GitHub repo and the Supabase project. There's no messy server migration.
+5. Next Steps: Setting up the Skeleton
+Now that we have the full picture (Frontend + Backend + Docs), we can initialize the project. This command will set up the workspace so all these parts can talk to each other.
+Would you like me to generate the pnpm-workspace.yaml and the initial package.json files for this specific stack so you can run the first install?

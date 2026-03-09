@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "turbo run test"
   },
   "devDependencies": {
     "turbo": "^2.3.0"

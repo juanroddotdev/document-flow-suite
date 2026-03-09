@@ -1,0 +1,28 @@
+To build a professional, "debt-free" suite that you can both use at work and sell to others, you need a stack that is modular.
+In 2026, the gold standard for this is a Monorepo (one repository, multiple packages). This keeps your "Manual," your "Components," and your "Apps" separate but perfectly synced.
+The "Zero-Debt" Tech Stack (2026 Edition)
+1. The Foundation: Monorepo Tooling
+Package Manager: pnpm
+Why: It’s faster than npm/yarn and uses a "content-addressable" store, meaning if 5 of your projects use the same library, it only takes up space on your hard drive once.
+Build Orchestrator: Turborepo
+Why: It remembers what you’ve already built. If you only change a sentence in the manual, it won't re-compile your PDF engine. It saves hours of wait time.
+2. The Manual: Starlight (by Astro)
+Why: Unlike VitePress (which locks you into Vue), Starlight allows you to embed any framework. You can have one page showing your component in React and another in Vue. It’s the ultimate "sales floor" for your product.
+Format: Everything is written in Markdown (.md), so if you ever want to leave Starlight, you just move your files.
+3. The Components: Lit (Web Components)
+Why: Lit components are native. They don't require a specific framework to run. You can drop a Lit component into a 20-year-old HTML site or a brand-new React app. This is how you ensure other companies can "buy" your tool regardless of their tech stack.
+4. The Logic: "The Engine"
+PDF Manipulation: pdf-lib (Still the king in 2026 for client-side byte-level control).
+Image Processing: heic2any + browser-image-compression.
+Threading: Comlink. This moves the heavy image "crunching" to a background thread so the browser window never freezes while "stapling" the PDF.
+The Project Map (Folder Structure)
+Here is how your computer will look once we initialize. This structure is the industry standard for a scalable software business.
+Plaintext
+/document-flow-suite├── /apps│   ├── /manual          <-- [Starlight] The "How-to" & Sales Site│   └── /utility-web     <-- [Vite] Your standalone free converter site├── /packages│   ├── /ui-components   <-- [Lit] The draggable tabletop, rotate buttons, etc.│   ├── /pdf-engine      <-- [Vanilla TS] The core logic (no UI)│   └── /shared-configs  <-- [TS/ESLint] Standard rules for the whole project├── package.json└── turbo.json
+Why this stack is "Cheaper & Easier"
+Hosting is Free: You can host the Manual and the Standalone Site on GitHub Pages or Vercel for $0.
+No Server Costs: Because the "Engine" runs in the user's browser (client-side), you don't have to pay for expensive cloud servers to process the PDFs.
+No Licensing Fees: Every tool listed above is Open Source (MIT/BSD). You own 100% of what you build.
+Your First Milestone: "The Skeleton"
+Before we write the "PDF stapling" code, we need to stand up the structure. This is where most developers get stuck, but it’s the most important part for avoiding debt.
+Would you like me to provide the specific terminal commands to generate this Monorepo and install these core libraries so you can see it running on your local machine?

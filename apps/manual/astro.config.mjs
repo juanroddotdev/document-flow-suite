@@ -9,9 +9,24 @@ export default defineConfig({
 			title: 'DocumentFlow Suite',
 			sidebar: [
 				{ label: 'Product Overview', slug: 'index' },
-				{ label: 'Security', slug: 'security' },
-				{ label: 'Business Case', slug: 'roi' },
-				{ label: 'Implementation Guide', slug: 'integration' },
+				{
+					label: 'Part 1: The Product Suite',
+					items: [
+						{ label: 'The Business Case', slug: 'business-case' },
+						{ label: 'Privacy & Compliance', slug: 'privacy-compliance' },
+						{ label: 'Integration & Support', slug: 'integration-support' },
+					],
+				},
+				{
+					label: "Part 2: The Architect's Vault",
+					items: [
+						{ label: 'Project Governance', slug: 'internal/project-governance' },
+						{ label: 'Engineering Blueprints', slug: 'internal/engineering-blueprints' },
+						{ label: 'Testing', slug: 'internal/testing' },
+						{ label: 'DevOps', slug: 'internal/devops' },
+						{ label: 'Business Strategy', slug: 'internal/business-strategy' },
+					],
+				},
 			],
 		}),
 	],

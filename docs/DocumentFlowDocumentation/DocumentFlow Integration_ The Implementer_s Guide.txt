@@ -1,0 +1,40 @@
+This page is designed to reassure the "Implementers"—the IT Managers and Lead Developers who will be tasked with putting your tool into production. It proves that DocumentFlow isn't a "heavy lift," but a "drop-in" solution.
+Integration & Implementation: Deploying DocumentFlow
+The DocumentFlow Suite is engineered for low-friction deployment. Because it is built using standardized Web Components (Lit), it can be integrated into your existing ecosystem without requiring a total rewrite of your current portals.
+1. Deployment Options
+Depending on your organizational needs, DocumentFlow can be deployed in three primary configurations:
+A. The Standalone Utility (Phase 1)
+A dedicated internal URL (e.g., triage.yourcompany.com) where employees can go to process documents they have already received.
+Best For: Immediate Adobe license reduction and back-office cleanup.
+Setup Time: < 1 Day.
+B. The Embedded Gateway (Phase 2)
+The component is "dropped" directly into your client-facing upload page. It acts as a smart filter between the user's computer and your storage server.
+Best For: Preventing "NIGO" (Not In Good Order) documents at the point of entry.
+Setup Time: 1–2 Weeks (including API testing).
+C. The Browser Overlay (Managed Extension)
+For legacy CRMs that cannot be easily edited, DocumentFlow can be deployed as a corporate Chrome/Edge extension. This "injects" the triage tool directly into the browser window of the CRM.
+Best For: Teams working inside 3rd party platforms they don't own.
+Setup Time: 1 Week.
+2. Technical Integration (The "Three-Step" Drop)
+Integrating the DocumentFlow component follows the native Web Component standard. Your developers simply add the library and the tag:
+Include the Script: Load the lightweight library in your global header.
+Add the Tag: Place the <document-flow-triage> tag where you want the tool to appear.
+Listen for the Event: Catch the finalized PDF "Blob" to send it to your server.
+HTML
+<script type="module" src="https://cdn.yourcompany.com/document-flow.js"></script><document-flow-triage   theme="corporate"   max-files="10"  on-complete="handleUpload"></document-flow-triage>
+3. Implementation Checklist
+To ensure a successful rollout, we follow a standardized implementation path:
+[ ] Environment Audit: Identify the primary browser used by staff (optimized for Chrome, Edge, and Safari).
+[ ] Brand Customization: Supply brand hex codes and logos to the internal /ui-library package.
+[ ] Security Approval: Review the "Zero-Server" architecture with the CISO or Security Lead.
+[ ] User Acceptance Testing (UAT): A 5-day trial with a small group of "Power Users" to verify workflow speed.
+4. Maintenance & Updates
+Because the core engine is decoupled from the UI, updates to "Agnostic Input" logic (e.g., supporting a new mobile photo format) can be pushed to the central library without requiring any changes to the host website.
+Note to IT: DocumentFlow requires zero server-side dependencies (no Node.js, Python, or Java required on your host server). It is a pure client-side asset.
+Finalizing the External Manual
+We have now completed the four pillars of the External Manual:
+Overview (The Vision)
+Security (The Trust)
+ROI (The Money)
+Integration (The How-To)
+Would you like to switch gears to the "Internal Manual" (The Architect's Vault)? We can start by drafting the "Definition of Done" for Version 1.0, which will act as your "Project Finish Line."

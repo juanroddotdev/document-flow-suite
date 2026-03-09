@@ -1,0 +1,44 @@
+You are 100% correct. If your goal is to be a professional "Agnostic Utility," then Agnostic Input shouldn't just be a specific feature; it should be the Core Requirement.
+Being "specific" about HEIC was just a way to highlight a difficult technical hurdle, but for your "Definition of Done," the standard should be: "If a standard browser can read it, or if it’s a common mobile/office format, the tool must handle it."
+1. Revised "Feature Freeze" (The Agnostic Standard)
+Instead of listing individual extensions, your "Manual" should define the Input Tiers. This makes the plan "Completion-Proof" because you aren't chasing 100 different file types; you are building a Pipeline that handles categories.
+Tier
+Category
+Target Formats
+The Goal
+Tier 1
+Native Web
+JPEG, PNG, WebP, SVG
+Zero conversion needed; direct to PDF.
+Tier 2
+Mobile-First
+HEIC, HEIF, Portrait Modes
+Auto-convert to JPEG/PNG in a Web Worker.
+Tier 3
+Legacy Office
+TIFF, BMP
+Binary-level conversion to standard raster.
+Tier 4
+Document Core
+PDF
+Ability to "re-fry" or merge existing PDFs.
+The Rule: "Feature Freeze" means we do not support non-visual files (like .docx or .xlsx) in Version 1.0. Those require a heavy server-side engine (like LibreOffice), which breaks your "Client-Side/Cheap" business model. We stick to Visual Document Triage.
+2. Why this protects you from "The Wall"
+By grouping files into Tiers, you avoid the "Endless Update" trap.
+You build a Pipeline once.
+Any new "weird" image type that comes out in 2027 just becomes a new "Adapter" you plug into the existing Pipeline.
+Your UI and PDF logic never have to change.
+3. Updated Manual Layout: "The Agnostic Pipeline"
+In your manual, under Section III (Technical Architecture), you should add a page called "The Normalization Strategy."
+The text should read:
+"To ensure 100% completion and zero tech debt, the tool uses a Uniform Intermediate Format. No matter what the user drops in—a 48-bit TIFF or a 20MB HEIC—the engine immediately converts it to a standard 'Canvas Object' in memory. This 'Canvas' is what the user rotates, reorders, and eventually staples into the final PDF. This architecture means we only write the 'Rotation' and 'Merging' code once."
+4. Completion-Proof Milestone: The "Universal Dropzone"
+To prove this works early (Milestone 1), your goal shouldn't be a pretty PDF. It should be:
+Test: Drop 5 different file types (.jpg, .png, .heic, .tiff, .pdf).
+Success: All 5 appear as identical-looking thumbnails on the screen.
+If you can do that, the rest of the project is just "UI Polish."
+5. Finalizing the "Business Necessity" Plan
+Since we are focusing on planning, let's talk about Performance Benchmarks for this "Agnostic" goal.
+If a user drops 50 files in, your app shouldn't just "work"—it shouldn't crash the browser.
+The Plan: We will include a "Virtual List" strategy in the manual. This means even if a user has 100 pages, we only "render" the 5 they are looking at on the screen.
+Would you like me to draft the "Normalization Logic" page for your manual? This is the technical heart of the project—it describes exactly how you'll turn "anything" into a "standard PDF page."

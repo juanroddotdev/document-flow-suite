@@ -1,0 +1,50 @@
+Since you want this to be "completion-proof," we need to address the two biggest killers of side projects: Scope Creep (trying to do too much) and The Wall (hitting a technical or bureaucratic hurdle you didn't see coming).
+To get to the finish line, your manual needs to include the "Internal Guardrails" and the "External Requirements" that most devs forget until they are 80% done and exhausted.
+1. New Manual Sections: The "Completion-Proof" Additions
+Add these sections to your Table of Contents to ensure you stay on track.
+VII. The "Definition of Done" (The Kill Switch)
+To prevent endless tweaking, you must define exactly when the MVP is "finished."
+Feature Freeze: List the 3 features that MUST work (e.g., HEIC conversion, Rotation, Merging). Everything else (like "AI Auto-Fill") is moved to "Version 2.0."
+The "Ship It" Checklist: A list of 10 tests the app must pass to be considered "v1.0."
+VIII. Security & Compliance (The "Trust" Manual)
+Since you're handling financial/retirement data, this is your biggest hurdle.
+Data Locality Policy: Document exactly how the RAM-only processing works.
+Privacy Policy Template: A draft of what you'll tell companies about how you handle their participants' PII (Personally Identifiable Information).
+IX. Brand & Identity
+Even if it's a utility, it needs a face.
+Design System: Choose a primary color, a font, and a name.
+The "Pitch Deck" for Employees: A one-pager for your coworkers to help them use it.
+2. Planning the "Business Necessities"
+If you want this to be a real business, you need to plan the infrastructure that sits around the code.
+A. Legal Shielding
+Entity Formation: Research if you should form an LLC. This separates your personal assets from the business.
+The "Moonlighting" Clause: Before you write a single line, double-check your employee handbook for "Intellectual Property Assignment" rules. You want to be 100% sure you own this code.
+B. The Feedback Loop
+Internal Beta Group: Identify 2-3 trusted coworkers who are "non-techy." Their frustration is your most valuable data.
+User Feedback Mechanism: How will people tell you it’s broken? (e.g., a simple "Submit Bug" button that sends a message to your Supabase backend).
+3. The "Finish Line" Strategy: Time-Boxing
+To combat the habit of not finishing, we use Milestone-Based Rewards.
+Milestone
+Deliverable
+The Reward
+Milestone 1
+Manual is 100% written & UI Wireframes are done.
+Buy that new keyboard/monitor you want.
+Milestone 2
+PoC: A file goes in, a PDF comes out.
+A fancy dinner.
+Milestone 3
+Beta: One coworker uses it successfully.
+Social media announcement.
+4. Operational Requirements (The "Boring" Stuff)
+You need to plan for when things go wrong.
+Error States: What happens if a user uploads a 500MB video instead of a photo?
+Support Plan: If you sell this to another company, how will you handle bugs while you are at your 9-to-5 job? (Answer: Automated error logging like Sentry).
+5. Adding "UI Wireframes" to the Manual
+Before coding, you should "draw" the app. Not with code, but with low-fidelity sketches.
+The Landing State: Big "Drop Files Here" area.
+The Triage State: Thumbnails with little "X" and "Rotate" buttons.
+The Export State: A "Processing" bar and a "Download PDF" button.
+Next Step in Planning
+Since you want this "fully thought out," we should define the UX Logic Flowchart. This is a map of every single click a user can make, from the moment they visit the site to the moment they get their PDF.
+Would you like me to draft the "User Journey Flowchart" for the manual? (This will reveal if we missed any buttons or screens in our current plan).
