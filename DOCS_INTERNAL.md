@@ -14,6 +14,12 @@ The following are **strictly out of scope** for v1.0:
 - **No .docx support** — Word documents are not supported in v1.0
 - **No cloud storage** — No integration with S3, GCS, or similar; no upload/download to external storage
 
+## Zero-Storage & Phase 1 Scope
+
+Phase 1 is strictly **client-side for images**. No server-side processing for image normalization, stapling, or PDF export.
+
+If DOCX support is added later, it will use a **stateless Edge Function** (process in memory, return result, no persistence). The **Zero-Storage rule** remains absolute: no file storage on servers, ever.
+
 ## Legal Shield
 
 ### IP Ownership

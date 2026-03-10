@@ -154,6 +154,12 @@ Version 1.0 is strictly an **Internal Employee Utility**. Phase 2 (Client-Facing
 
 Documenting these exclusions gives permission to ignore "cool ideas" (e.g. "email the PDF") until Phase 2.
 
+### Zero-Storage rule
+
+**Phase 1:** All image processing is strictly client-side. No server-side processing for images.
+
+**Future DOCX support (if any):** Would use a stateless Edge Function (process in memory, return result, no persistence). The **Zero-Storage** rule is absolute—no file storage on servers, ever.
+
 ---
 
 ## 7. Dependency guardrails
