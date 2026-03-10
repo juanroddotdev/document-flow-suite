@@ -72,6 +72,7 @@ function renderTabletopContent(container: HTMLElement): void {
   });
   container.querySelectorAll('file-thumbnail').forEach((el) => {
     el.addEventListener('rotate', handleRotate);
+    el.addEventListener('delete', handleDelete);
   });
 }
 
@@ -113,6 +114,18 @@ function handleRotate(e: Event): void {
   page.previewDataUrl = canvasToDataUrl(page.canvas);
   const tabletop = document.getElementById('tabletop');
   if (tabletop) renderTabletopContent(tabletop);
+}
+
+function handleDelete(e: Event): void {
+  const target = e.target as HTMLElement;
+  const wrapper = target.closest('[data-page-id]') as HTMLElement;
+  const id = wrapper?.getAttribute('data-page-id');
+  if (!id) return;
+  state = state.filter((p) => p.id !== id);
+  const tabletop = document.getElementById('tabletop');
+  if (tabletop) renderTabletopContent(tabletop);
+  const exportBtn = document.getElementById('export-pdf') as HTMLButtonElement | null;
+  if (exportBtn) exportBtn.disabled = state.length === 0;
 }
 
 function render(): void {
