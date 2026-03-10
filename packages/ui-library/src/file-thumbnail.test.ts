@@ -61,4 +61,25 @@ describe('FileThumbnail', () => {
     deleteBtn?.click();
     expect(deleted).toBe(true);
   });
+
+  it('shows page badge when pageIndex is 3', async () => {
+    const el = await fixture<FileThumbnail>(html`<file-thumbnail filename="x.png"></file-thumbnail>`);
+    el.pageIndex = 3;
+    await el.updateComplete;
+    const badge = el.shadowRoot?.querySelector('.page-badge');
+    expect(badge).toBeTruthy();
+    expect(badge?.textContent).toBe('3');
+  });
+
+  it('does not render badge when page-index is 0 or unset', async () => {
+    const el = await fixture<FileThumbnail>(html`<file-thumbnail filename="x.png"></file-thumbnail>`);
+    await el.updateComplete;
+    const badge = el.shadowRoot?.querySelector('.page-badge');
+    expect(badge).toBeNull();
+
+    el.pageIndex = 0;
+    await el.updateComplete;
+    const badgeAfter = el.shadowRoot?.querySelector('.page-badge');
+    expect(badgeAfter).toBeNull();
+  });
 });

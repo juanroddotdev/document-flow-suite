@@ -17,12 +17,32 @@ export class FileThumbnail extends LitElement {
       align-items: center;
       padding: 0.75rem;
     }
+    .preview-wrapper {
+      position: relative;
+      display: inline-block;
+    }
     .preview {
       width: 80px;
       height: 80px;
       object-fit: contain;
       background: #fff;
       border-radius: 4px;
+      display: block;
+    }
+    .page-badge {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #2563eb;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .filename {
       font-size: 0.75rem;
@@ -65,6 +85,9 @@ export class FileThumbnail extends LitElement {
   @property({ type: String })
   filename: string = '';
 
+  @property({ type: Number, attribute: 'page-index' })
+  pageIndex: number = 0;
+
   private _onRotate() {
     this.dispatchEvent(new CustomEvent('rotate', { bubbles: true }));
   }
@@ -76,9 +99,12 @@ export class FileThumbnail extends LitElement {
   render() {
     return html`
       <div class="container">
-        ${this.preview
-          ? html`<img class="preview" src="${this.preview}" alt="${this.filename}" />`
-          : html`<div class="preview" style="display:flex;align-items:center;justify-content:center;color:#9ca3af;">No preview</div>`}
+        <div class="preview-wrapper">
+          ${this.preview
+            ? html`<img class="preview" src="${this.preview}" alt="${this.filename}" />`
+            : html`<div class="preview" style="display:flex;align-items:center;justify-content:center;color:#9ca3af;">No preview</div>`}
+          ${this.pageIndex >= 1 ? html`<span class="page-badge">${this.pageIndex}</span>` : ''}
+        </div>
         <span class="filename">${this.filename}</span>
         <div>
           <button @click="${this._onRotate}">Rotate 90°</button>
