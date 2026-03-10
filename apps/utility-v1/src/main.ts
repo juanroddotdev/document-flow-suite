@@ -18,6 +18,88 @@ function canvasToDataUrl(canvas: HTMLCanvasElement): string {
   return canvas.toDataURL('image/jpeg', 0.85);
 }
 
+const INVALID_FILENAME_CHARS = /[/\\:*?"<>|]/g;
+
+function sanitizeFilename(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return '';
+  const sanitized = trimmed.replace(INVALID_FILENAME_CHARS, '_');
+  return sanitized.endsWith('.pdf') ? sanitized : `${sanitized}.pdf`;
+}
+
+function getDefaultExportName(): string {
+  const date = new Date().toISOString().slice(0, 10);
+  return `Standardized_Batch_${date}.pdf`;
+}
+
+function showExportModal(): Promise<string | null> {
+  const defaultName = getDefaultExportName();
+  return new Promise((resolve) => {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+    backdrop.id = 'export-modal-backdrop';
+
+    const card = document.createElement('div');
+    card.className = 'bg-white rounded-xl shadow-xl p-6 w-full max-w-md';
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-label', 'Name your document');
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = defaultName.replace('.pdf', '');
+    input.className =
+      'w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 mb-4';
+    input.placeholder = 'Document name';
+    input.autofocus = true;
+
+    const btnRow = document.createElement('div');
+    btnRow.className = 'flex gap-2 justify-end';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.className =
+      'px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50';
+
+    const exportBtn = document.createElement('button');
+    exportBtn.type = 'button';
+    exportBtn.textContent = 'Export';
+    exportBtn.className = 'px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700';
+
+    function close(result: string | null) {
+      backdrop.remove();
+      resolve(result);
+    }
+
+    cancelBtn.addEventListener('click', () => close(null));
+    exportBtn.addEventListener('click', () => {
+      const raw = input.value.trim() || defaultName.replace('.pdf', '');
+      const filename = sanitizeFilename(raw) || defaultName;
+      close(filename);
+    });
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) close(null);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') exportBtn.click();
+      if (e.key === 'Escape') close(null);
+    });
+
+    const heading = document.createElement('h3');
+    heading.className = 'text-lg font-semibold text-slate-800 mb-2';
+    heading.textContent = 'Name your document';
+    card.appendChild(heading);
+    card.appendChild(input);
+    btnRow.appendChild(cancelBtn);
+    btnRow.appendChild(exportBtn);
+    card.appendChild(btnRow);
+    backdrop.appendChild(card);
+    document.body.appendChild(backdrop);
+    input.focus();
+    input.select();
+  });
+}
+
 function rotateCanvas90(canvas: HTMLCanvasElement): HTMLCanvasElement {
   const out = document.createElement('canvas');
   out.width = canvas.height;
@@ -62,6 +144,7 @@ function renderTabletopContent(container: HTMLElement): void {
     if (p) {
       el.setAttribute('preview', p.previewDataUrl);
       el.setAttribute('filename', p.filename);
+      el.setAttribute('page-index', String(i + 1));
     }
   });
 
@@ -212,6 +295,11 @@ async function handleExport(): Promise<void> {
   if (state.length === 0) return;
   const exportBtn = document.getElementById('export-pdf') as HTMLButtonElement;
   if (exportBtn) exportBtn.disabled = true;
+  const filename = await showExportModal();
+  if (!filename) {
+    if (exportBtn) exportBtn.disabled = false;
+    return;
+  }
   try {
     const pages: ProcessingPage[] = state.map((p, i) => ({
       canvas: p.canvas,
@@ -222,7 +310,7 @@ async function handleExport(): Promise<void> {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `document-flow-${Date.now()}.pdf`;
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
   } catch (err) {
