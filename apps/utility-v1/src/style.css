@@ -1,3 +1,7 @@
 @import "tailwindcss";
 @source "../*.html";
 @source "./**/*.ts";
+
+.thumbnail-item {
+  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}

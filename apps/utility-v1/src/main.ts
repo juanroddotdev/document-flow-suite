@@ -16,7 +16,8 @@ let state: PageState[] = [];
 let nextId = 0;
 
 let dragPlaceholder: HTMLElement | null = null;
-const DRAG_GHOST_CLASS = 'opacity-50 cursor-grabbing';
+let lastDropIndex = -1;
+
 
 function canvasToDataUrl(canvas: HTMLCanvasElement): string {
   return canvas.toDataURL('image/jpeg', 0.85);
@@ -176,7 +177,7 @@ function renderTabletopContent(container: HTMLElement): void {
   const thumbnailsHtml = state
     .map(
       (p, i) => `
-    <div class="flex-shrink-0 cursor-grab" data-page-id="${p.id}" data-index="${i}" draggable="true">
+    <div class="thumbnail-item cursor-grab" data-page-id="${p.id}" data-index="${i}" draggable="true">
       <file-thumbnail data-page-id="${p.id}" status="${p.status}"></file-thumbnail>
     </div>
   `
@@ -184,7 +185,7 @@ function renderTabletopContent(container: HTMLElement): void {
     .join('');
 
   container.innerHTML = `
-    <div id="thumbnails-flex" class="flex flex-wrap gap-4 p-4 overflow-auto justify-center items-start content-start w-full">
+    <div id="thumbnails-flex" class="grid gap-4 p-4 overflow-auto w-full" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); justify-items: center; align-content: start;">
       ${thumbnailsHtml}
     </div>
   `;
@@ -199,11 +200,11 @@ function renderTabletopContent(container: HTMLElement): void {
     }
   });
 
+  const tabletop = document.getElementById('tabletop');
   container.querySelectorAll('[draggable="true"]').forEach((el) => {
-    el.addEventListener('dragstart', (e: Event) => handleDragStart(e as DragEvent, flexContainer));
+    el.addEventListener('dragstart', (e: Event) => handleDragStart(e as DragEvent, flexContainer, tabletop));
     el.addEventListener('dragover', (e: Event) => handleDragOver(e as DragEvent, flexContainer));
-    el.addEventListener('drop', (e: Event) => handleDrop(e as DragEvent, flexContainer));
-    el.addEventListener('dragend', (e: Event) => handleDragEnd(e as DragEvent));
+    el.addEventListener('drop', (e: Event) => handleDrop(e as DragEvent, flexContainer, tabletop));
   });
   container.querySelectorAll('file-thumbnail').forEach((el) => {
     el.addEventListener('rotate', handleRotate);
@@ -211,65 +212,111 @@ function renderTabletopContent(container: HTMLElement): void {
   });
 }
 
-function ensurePlaceholder(container: HTMLElement): HTMLElement {
-  if (dragPlaceholder && dragPlaceholder.parentElement === container) return dragPlaceholder;
+function ensurePlaceholder(container: HTMLElement, widthPx: number, heightPx: number): HTMLElement {
+  if (dragPlaceholder && dragPlaceholder.parentElement === container) {
+    dragPlaceholder.style.width = `${widthPx}px`;
+    dragPlaceholder.style.height = `${heightPx}px`;
+    return dragPlaceholder;
+  }
   if (dragPlaceholder?.parentElement) dragPlaceholder.remove();
   dragPlaceholder = document.createElement('div');
   dragPlaceholder.id = 'drop-placeholder';
   dragPlaceholder.className =
-    'flex-shrink-0 w-20 h-24 border-2 border-dashed border-slate-400 rounded-lg bg-slate-100/80 pointer-events-none';
+    'flex-shrink-0 border-2 border-dashed border-slate-400 rounded-lg bg-slate-100/80 rounded-lg';
+  dragPlaceholder.style.width = `${widthPx}px`;
+  dragPlaceholder.style.height = `${heightPx}px`;
+  dragPlaceholder.style.minWidth = `${widthPx}px`;
   dragPlaceholder.setAttribute('aria-hidden', 'true');
   return dragPlaceholder;
 }
 
-function handleDragStart(e: DragEvent, flexContainer: HTMLElement): void {
+function handleDragStart(e: DragEvent, flexContainer: HTMLElement, tabletop: HTMLElement | null): void {
   const target = e.currentTarget as HTMLElement;
   const id = target.getAttribute('data-page-id');
   if (id) e.dataTransfer?.setData('text/plain', id);
   e.dataTransfer!.effectAllowed = 'move';
-  target.classList.add(...DRAG_GHOST_CLASS.split(' '));
-  const ph = ensurePlaceholder(flexContainer);
-  if (!ph.parentElement) flexContainer.appendChild(ph);
+
+  const rect = target.getBoundingClientRect();
+  const ph = ensurePlaceholder(flexContainer, rect.width, rect.height);
+  flexContainer.insertBefore(ph, target);
+  target.setAttribute('data-dragging', 'true');
+  target.style.position = 'absolute';
+  target.style.left = `${rect.left}px`;
+  target.style.top = `${rect.top}px`;
+  target.style.opacity = '0';
+  target.style.pointerEvents = 'none';
+
+  document.addEventListener(
+    'dragend',
+    () => {
+      lastDropIndex = -1;
+      dragPlaceholder?.remove();
+      dragPlaceholder = null;
+      const t = document.getElementById('tabletop');
+      if (t) renderTabletopContent(t);
+    },
+    { once: true, capture: true }
+  );
+
+  ph.addEventListener('dragover', (ev: Event) => handleDragOver(ev as DragEvent, flexContainer));
+  ph.addEventListener('drop', (ev: Event) => handleDrop(ev as DragEvent, flexContainer, tabletop));
 }
 
 function handleDragOver(e: DragEvent, flexContainer: HTMLElement): void {
   e.preventDefault();
   e.dataTransfer!.dropEffect = 'move';
+  const ph = flexContainer.querySelector('#drop-placeholder') as HTMLElement | null;
+  if (!ph) return;
   const over = (e.target as HTMLElement).closest('[data-page-id]') as HTMLElement | null;
-  const ph = flexContainer.querySelector('#drop-placeholder');
-  if (!ph || !over || over === ph) return;
-  const idx = Array.from(flexContainer.children).indexOf(over);
-  if (idx >= 0 && flexContainer.contains(ph)) {
-    const currentIdx = Array.from(flexContainer.children).indexOf(ph);
-    if (currentIdx !== idx) {
-      if (idx < currentIdx) flexContainer.insertBefore(ph, over);
-      else flexContainer.insertBefore(ph, over.nextSibling);
-    }
+  const overPlaceholder = (e.target as HTMLElement).closest('#drop-placeholder');
+  if (overPlaceholder) return;
+  if (!over) return;
+  const targetIdx = Array.from(flexContainer.children).indexOf(over);
+  const currentIdx = Array.from(flexContainer.children).indexOf(ph);
+  let newPhIndex: number;
+  if (targetIdx < currentIdx) {
+    newPhIndex = targetIdx;
+  } else if (targetIdx > currentIdx) {
+    newPhIndex = targetIdx;
+  } else {
+    return;
+  }
+  if (newPhIndex === currentIdx) return;
+  if (newPhIndex === lastDropIndex) return;
+  lastDropIndex = newPhIndex;
+
+  const targetEl = flexContainer.children[newPhIndex];
+  if (targetEl && targetEl !== ph) {
+    flexContainer.insertBefore(ph, targetEl);
   }
 }
 
-function handleDrop(e: DragEvent, _flexContainer: HTMLElement): void {
+function handleDrop(e: DragEvent, flexContainer: HTMLElement, tabletop: HTMLElement | null): void {
   e.preventDefault();
   const fromId = e.dataTransfer?.getData('text/plain');
-  const toEl = (e.currentTarget as HTMLElement).closest('[data-page-id]') as HTMLElement;
-  const toId = toEl?.getAttribute('data-page-id');
+  const currentTarget = e.currentTarget as HTMLElement;
+  let toIndex: number;
+  if (currentTarget.id === 'drop-placeholder') {
+    toIndex = Array.from(flexContainer.children).indexOf(currentTarget);
+  } else {
+    const toEl = currentTarget.closest('[data-page-id]') as HTMLElement;
+    const toId = toEl?.getAttribute('data-page-id');
+    if (!toId || fromId === toId) {
+      dragPlaceholder?.remove();
+      dragPlaceholder = null;
+      return;
+    }
+    toIndex = state.findIndex((p) => p.id === toId);
+  }
+  lastDropIndex = -1;
   dragPlaceholder?.remove();
   dragPlaceholder = null;
-  if (!fromId || !toId || fromId === toId) return;
+  if (!fromId || toIndex === -1) return;
   const fromIndex = state.findIndex((p) => p.id === fromId);
-  const toIndex = state.findIndex((p) => p.id === toId);
-  if (fromIndex === -1 || toIndex === -1) return;
+  if (fromIndex === -1) return;
   const [removed] = state.splice(fromIndex, 1);
   state.splice(toIndex, 0, removed);
-  const tabletop = document.getElementById('tabletop');
   if (tabletop) renderTabletopContent(tabletop);
-}
-
-function handleDragEnd(e: DragEvent): void {
-  const target = e.currentTarget as HTMLElement;
-  target.classList.remove(...DRAG_GHOST_CLASS.split(' '));
-  dragPlaceholder?.remove();
-  dragPlaceholder = null;
 }
 
 function handleRotate(e: Event): void {

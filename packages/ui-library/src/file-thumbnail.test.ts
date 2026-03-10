@@ -15,8 +15,8 @@ describe('FileThumbnail', () => {
   it('shows filename', async () => {
     const el = await fixture<FileThumbnail>(html`<file-thumbnail filename="test.pdf"></file-thumbnail>`);
     await el.updateComplete;
-    const span = el.shadowRoot?.querySelector('.filename');
-    expect(span?.textContent).toBe('test.pdf');
+    const overlay = el.shadowRoot?.querySelector('.filename-overlay');
+    expect(overlay?.textContent).toBe('test.pdf');
   });
 
   it('shows "No preview" when preview is empty', async () => {
