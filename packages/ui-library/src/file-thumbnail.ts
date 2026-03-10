@@ -40,8 +40,22 @@ export class FileThumbnail extends LitElement {
       background: #fff;
       cursor: pointer;
     }
+    button {
+      margin-left: 0.25rem;
+    }
+    button:first-of-type {
+      margin-left: 0;
+    }
     button:hover {
       background: #f3f4f6;
+    }
+    .delete-btn {
+      color: #b91c1c;
+      border-color: #fecaca;
+      background: #fef2f2;
+    }
+    .delete-btn:hover {
+      background: #fee2e2;
     }
   `;
 
@@ -55,6 +69,10 @@ export class FileThumbnail extends LitElement {
     this.dispatchEvent(new CustomEvent('rotate', { bubbles: true }));
   }
 
+  private _onDelete() {
+    this.dispatchEvent(new CustomEvent('delete', { bubbles: true }));
+  }
+
   render() {
     return html`
       <div class="container">
@@ -62,7 +80,10 @@ export class FileThumbnail extends LitElement {
           ? html`<img class="preview" src="${this.preview}" alt="${this.filename}" />`
           : html`<div class="preview" style="display:flex;align-items:center;justify-content:center;color:#9ca3af;">No preview</div>`}
         <span class="filename">${this.filename}</span>
-        <button @click="${this._onRotate}">Rotate 90°</button>
+        <div>
+          <button @click="${this._onRotate}">Rotate 90°</button>
+          <button class="delete-btn" @click="${this._onDelete}">Remove</button>
+        </div>
       </div>
     `;
   }

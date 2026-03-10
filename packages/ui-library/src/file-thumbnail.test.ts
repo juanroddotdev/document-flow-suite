@@ -43,9 +43,22 @@ describe('FileThumbnail', () => {
     el.addEventListener('rotate', () => {
       rotated = true;
     });
-    const button = el.shadowRoot?.querySelector('button');
-    expect(button).toBeTruthy();
-    button?.click();
+    const rotateBtn = el.shadowRoot?.querySelector('button');
+    expect(rotateBtn).toBeTruthy();
+    rotateBtn?.click();
     expect(rotated).toBe(true);
+  });
+
+  it('dispatches delete event when Remove button is clicked', async () => {
+    const el = await fixture<FileThumbnail>(html`<file-thumbnail filename="x.png"></file-thumbnail>`);
+    await el.updateComplete;
+    let deleted = false;
+    el.addEventListener('delete', () => {
+      deleted = true;
+    });
+    const deleteBtn = el.shadowRoot?.querySelector('.delete-btn');
+    expect(deleteBtn).toBeTruthy();
+    deleteBtn?.click();
+    expect(deleted).toBe(true);
   });
 });
