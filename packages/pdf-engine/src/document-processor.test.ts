@@ -11,12 +11,12 @@ describe('DocumentProcessor', () => {
   describe('normalizeToPages', () => {
     it('throws for unsupported file type', async () => {
       const file = new File(['x'], 'doc.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-      await expect(processor.normalizeToPages(file)).rejects.toThrow('Unsupported file type');
+      await expect(processor.normalizeToPages(file)).rejects.toThrow(/Unsupported file type/);
     });
 
     it('throws for unknown extension', async () => {
       const file = new File(['x'], 'file.xyz', { type: 'application/octet-stream' });
-      await expect(processor.normalizeToPages(file)).rejects.toThrow('Unsupported file type');
+      await expect(processor.normalizeToPages(file)).rejects.toThrow(/Unsupported file type/);
     });
 
     it.skip('returns pages for a valid PNG file (requires real Image/Blob load)', async () => {

@@ -3,6 +3,15 @@ import heic2any from 'heic2any';
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import UTIF from 'utif';
+import {
+  unsupportedFileType,
+  normalizationFailed,
+  exportFailed,
+  DocumentFlowError,
+} from './errors.js';
+
+export type { DocumentFlowError } from './errors.js';
+export { ErrorCode, isDocumentFlowError } from './errors.js';
 
 const TARGET_DPI = 150;
 const MAX_PDF_BYTES = 5 * 1024 * 1024; // 5MB
@@ -38,33 +47,9 @@ function blobToCanvas(blob: Blob): Promise<HTMLCanvasElement> {
   });
 }
 
-function isHeic(file: File): boolean {
-  const name = file.name.toLowerCase();
-  const type = file.type.toLowerCase();
-  return (
-    name.endsWith('.heic') ||
-    name.endsWith('.heif') ||
-    type.includes('heic') ||
-    type.includes('heif')
-  );
-}
+import { isHeic, isPdf, isRasterImage, isTiff } from './file-types.js';
 
-function isTiff(file: File): boolean {
-  const name = file.name.toLowerCase();
-  const type = file.type.toLowerCase();
-  return name.endsWith('.tiff') || name.endsWith('.tif') || type.includes('tiff');
-}
-
-function isPdf(file: File): boolean {
-  return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-}
-
-function isRasterImage(file: File): boolean {
-  const type = file.type.toLowerCase();
-  return ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp', 'image/webp'].includes(
-    type
-  );
-}
+export { isHeic } from './file-types.js';
 
 async function normalizeHeic(file: File): Promise<ProcessingPage[]> {
   const result = await heic2any({
@@ -152,16 +137,25 @@ async function downscaleForOptimization(
 
 export class DocumentProcessor {
   async normalizeToPages(file: File): Promise<ProcessingPage[]> {
-    if (isHeic(file)) return normalizeHeic(file);
-    if (isTiff(file)) return normalizeTiff(file);
-    if (isPdf(file)) return normalizePdf(file);
-    if (isRasterImage(file)) return normalizeRaster(file);
-    throw new Error(`Unsupported file type: ${file.type} (${file.name})`);
+    try {
+      if (isHeic(file)) return await normalizeHeic(file);
+      if (isTiff(file)) return await normalizeTiff(file);
+      if (isPdf(file)) return await normalizePdf(file);
+      if (isRasterImage(file)) return await normalizeRaster(file);
+      throw unsupportedFileType(file.name, file.type);
+    } catch (e) {
+      if (e instanceof DocumentFlowError) throw e;
+      throw normalizationFailed(
+        file.name,
+        e instanceof Error ? e.message : 'Unknown error',
+        e
+      );
+    }
   }
 
   async generateStapledPDF(pages: ProcessingPage[]): Promise<Uint8Array> {
-    if (pages.length === 0) throw new Error('No pages to staple');
-
+    if (pages.length === 0) throw exportFailed('No pages to staple');
+    try {
     const sorted = [...pages].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
     const addPagesToDoc = async (
@@ -206,5 +200,9 @@ export class DocumentProcessor {
     }
 
     return result;
+  } catch (e) {
+    if (e instanceof DocumentFlowError) throw e;
+    throw exportFailed(e instanceof Error ? e.message : 'Unknown error', e);
+  }
   }
 }
