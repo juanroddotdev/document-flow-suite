@@ -15,8 +15,8 @@ describe('FileThumbnail', () => {
   it('shows filename', async () => {
     const el = await fixture<FileThumbnail>(html`<file-thumbnail filename="test.pdf"></file-thumbnail>`);
     await el.updateComplete;
-    const span = el.shadowRoot?.querySelector('.filename');
-    expect(span?.textContent).toBe('test.pdf');
+    const overlay = el.shadowRoot?.querySelector('.filename-overlay');
+    expect(overlay?.textContent).toBe('test.pdf');
   });
 
   it('shows "No preview" when preview is empty', async () => {
@@ -36,29 +36,29 @@ describe('FileThumbnail', () => {
     expect((img as HTMLImageElement).src).toBe(dataUrl);
   });
 
-  it('dispatches rotate event when button is clicked', async () => {
+  it('dispatches rotate event when rotate action is clicked', async () => {
     const el = await fixture<FileThumbnail>(html`<file-thumbnail filename="x.png"></file-thumbnail>`);
     await el.updateComplete;
     let rotated = false;
     el.addEventListener('rotate', () => {
       rotated = true;
     });
-    const rotateBtn = el.shadowRoot?.querySelector('button');
+    const rotateBtn = el.shadowRoot?.querySelector('.action-rotate');
     expect(rotateBtn).toBeTruthy();
-    rotateBtn?.click();
+    (rotateBtn as HTMLElement).click();
     expect(rotated).toBe(true);
   });
 
-  it('dispatches delete event when Remove button is clicked', async () => {
+  it('dispatches delete event when trash action is clicked', async () => {
     const el = await fixture<FileThumbnail>(html`<file-thumbnail filename="x.png"></file-thumbnail>`);
     await el.updateComplete;
     let deleted = false;
     el.addEventListener('delete', () => {
       deleted = true;
     });
-    const deleteBtn = el.shadowRoot?.querySelector('.delete-btn');
+    const deleteBtn = el.shadowRoot?.querySelector('.action-trash');
     expect(deleteBtn).toBeTruthy();
-    deleteBtn?.click();
+    (deleteBtn as HTMLElement).click();
     expect(deleted).toBe(true);
   });
 

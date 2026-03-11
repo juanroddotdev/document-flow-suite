@@ -9,10 +9,15 @@ interface PageState {
   canvas: HTMLCanvasElement;
   previewDataUrl: string;
   filename: string;
+  status: 'processing' | 'ready';
 }
 
 let state: PageState[] = [];
 let nextId = 0;
+
+let dragPlaceholder: HTMLElement | null = null;
+let lastDropIndex = -1;
+
 
 function canvasToDataUrl(canvas: HTMLCanvasElement): string {
   return canvas.toDataURL('image/jpeg', 0.85);
@@ -112,12 +117,58 @@ function rotateCanvas90(canvas: HTMLCanvasElement): HTMLCanvasElement {
   return out;
 }
 
+const FILE_INPUT_ACCEPT =
+  '.heic,.tif,.tiff,.png,.jpg,.jpeg,.pdf,image/heic,image/tiff,image/png,image/jpeg,application/pdf';
+
+async function processAndAddFiles(files: FileList, tabletop: HTMLElement): Promise<void> {
+  const progressWrap = document.createElement('div');
+  progressWrap.className = 'w-full px-4 py-2 bg-slate-100 border-b border-slate-200';
+  progressWrap.innerHTML = `
+    <p class="text-sm font-medium text-slate-600 progress-text">Processing…</p>
+    <div class="mt-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+      <div class="progress-fill h-full bg-slate-600 rounded-full transition-all duration-200" style="width: 0%"></div>
+    </div>
+  `;
+  const progressText = progressWrap.querySelector('.progress-text') as HTMLElement;
+  const progressFill = progressWrap.querySelector('.progress-fill') as HTMLElement;
+  tabletop.prepend(progressWrap);
+  try {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (progressText) progressText.textContent = `Processing file ${i + 1} of ${files.length}`;
+      if (progressFill) progressFill.style.width = `${((i + 1) / files.length) * 100}%`;
+      const pages = await processor.normalizeToPages(file);
+      for (let j = 0; j < pages.length; j++) {
+        const p = pages[j];
+        const filename = pages.length > 1 ? `${file.name} (${j + 1})` : file.name;
+        state.push({
+          id: `page-${nextId++}`,
+          canvas: p.canvas,
+          previewDataUrl: canvasToDataUrl(p.canvas),
+          filename,
+          status: 'processing',
+        });
+      }
+    }
+    state.forEach((p) => (p.status = 'ready'));
+    renderTabletopContent(tabletop);
+    const exportBtn = document.getElementById('export-pdf');
+    if (exportBtn) (exportBtn as HTMLButtonElement).disabled = false;
+  } catch (err) {
+    console.error(err);
+    if (progressText) progressText.textContent = `Error: ${err instanceof Error ? err.message : 'Failed to process'}`;
+  } finally {
+    progressWrap.remove();
+  }
+}
+
 function renderTabletopContent(container: HTMLElement): void {
   if (state.length === 0) {
     container.innerHTML = `
-      <div class="text-center text-slate-500">
-        <p class="text-lg font-medium">Drop files here</p>
-        <p class="text-sm mt-1">HEIC, TIFF, PNG, JPG, PDF</p>
+      <div class="text-center text-slate-500 empty-dropzone-content">
+        <p class="text-xl font-semibold text-slate-600">Drop Files Anywhere</p>
+        <p class="text-sm mt-2">or click to browse</p>
+        <p class="text-xs mt-3 text-slate-400">HEIC, TIFF, PNG, JPG, PDF</p>
       </div>
     `;
     return;
@@ -126,19 +177,20 @@ function renderTabletopContent(container: HTMLElement): void {
   const thumbnailsHtml = state
     .map(
       (p, i) => `
-    <div class="flex-shrink-0" data-page-id="${p.id}" data-index="${i}" draggable="true">
-      <file-thumbnail data-page-id="${p.id}"></file-thumbnail>
+    <div class="thumbnail-item cursor-grab" data-page-id="${p.id}" data-index="${i}" draggable="true">
+      <file-thumbnail data-page-id="${p.id}" status="${p.status}"></file-thumbnail>
     </div>
   `
     )
     .join('');
 
   container.innerHTML = `
-    <div class="flex flex-wrap gap-4 p-4 overflow-auto justify-center items-start content-start w-full">
+    <div id="thumbnails-flex" class="grid gap-4 p-4 overflow-auto w-full" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); justify-items: center; align-content: start;">
       ${thumbnailsHtml}
     </div>
   `;
 
+  const flexContainer = container.querySelector('#thumbnails-flex') as HTMLElement;
   container.querySelectorAll('file-thumbnail').forEach((el, i) => {
     const p = state[i];
     if (p) {
@@ -148,10 +200,11 @@ function renderTabletopContent(container: HTMLElement): void {
     }
   });
 
+  const tabletop = document.getElementById('tabletop');
   container.querySelectorAll('[draggable="true"]').forEach((el) => {
-    el.addEventListener('dragstart', handleDragStart as EventListener);
-    el.addEventListener('dragover', handleDragOver as EventListener);
-    el.addEventListener('drop', handleDrop as EventListener);
+    el.addEventListener('dragstart', (e: Event) => handleDragStart(e as DragEvent, flexContainer, tabletop));
+    el.addEventListener('dragover', (e: Event) => handleDragOver(e as DragEvent, flexContainer));
+    el.addEventListener('drop', (e: Event) => handleDrop(e as DragEvent, flexContainer, tabletop));
   });
   container.querySelectorAll('file-thumbnail').forEach((el) => {
     el.addEventListener('rotate', handleRotate);
@@ -159,30 +212,110 @@ function renderTabletopContent(container: HTMLElement): void {
   });
 }
 
-function handleDragStart(e: DragEvent): void {
+function ensurePlaceholder(container: HTMLElement, widthPx: number, heightPx: number): HTMLElement {
+  if (dragPlaceholder && dragPlaceholder.parentElement === container) {
+    dragPlaceholder.style.width = `${widthPx}px`;
+    dragPlaceholder.style.height = `${heightPx}px`;
+    return dragPlaceholder;
+  }
+  if (dragPlaceholder?.parentElement) dragPlaceholder.remove();
+  dragPlaceholder = document.createElement('div');
+  dragPlaceholder.id = 'drop-placeholder';
+  dragPlaceholder.className =
+    'flex-shrink-0 border-2 border-dashed border-slate-400 rounded-lg bg-slate-100/80 rounded-lg';
+  dragPlaceholder.style.width = `${widthPx}px`;
+  dragPlaceholder.style.height = `${heightPx}px`;
+  dragPlaceholder.style.minWidth = `${widthPx}px`;
+  dragPlaceholder.setAttribute('aria-hidden', 'true');
+  return dragPlaceholder;
+}
+
+function handleDragStart(e: DragEvent, flexContainer: HTMLElement, tabletop: HTMLElement | null): void {
   const target = e.currentTarget as HTMLElement;
   const id = target.getAttribute('data-page-id');
   if (id) e.dataTransfer?.setData('text/plain', id);
   e.dataTransfer!.effectAllowed = 'move';
+
+  const rect = target.getBoundingClientRect();
+  const ph = ensurePlaceholder(flexContainer, rect.width, rect.height);
+  flexContainer.insertBefore(ph, target);
+  target.setAttribute('data-dragging', 'true');
+  target.style.position = 'absolute';
+  target.style.left = `${rect.left}px`;
+  target.style.top = `${rect.top}px`;
+  target.style.opacity = '0';
+  target.style.pointerEvents = 'none';
+
+  document.addEventListener(
+    'dragend',
+    () => {
+      lastDropIndex = -1;
+      dragPlaceholder?.remove();
+      dragPlaceholder = null;
+      const t = document.getElementById('tabletop');
+      if (t) renderTabletopContent(t);
+    },
+    { once: true, capture: true }
+  );
+
+  ph.addEventListener('dragover', (ev: Event) => handleDragOver(ev as DragEvent, flexContainer));
+  ph.addEventListener('drop', (ev: Event) => handleDrop(ev as DragEvent, flexContainer, tabletop));
 }
 
-function handleDragOver(e: DragEvent): void {
+function handleDragOver(e: DragEvent, flexContainer: HTMLElement): void {
   e.preventDefault();
   e.dataTransfer!.dropEffect = 'move';
+  const ph = flexContainer.querySelector('#drop-placeholder') as HTMLElement | null;
+  if (!ph) return;
+  const over = (e.target as HTMLElement).closest('[data-page-id]') as HTMLElement | null;
+  const overPlaceholder = (e.target as HTMLElement).closest('#drop-placeholder');
+  if (overPlaceholder) return;
+  if (!over) return;
+  const targetIdx = Array.from(flexContainer.children).indexOf(over);
+  const currentIdx = Array.from(flexContainer.children).indexOf(ph);
+  let newPhIndex: number;
+  if (targetIdx < currentIdx) {
+    newPhIndex = targetIdx;
+  } else if (targetIdx > currentIdx) {
+    newPhIndex = targetIdx;
+  } else {
+    return;
+  }
+  if (newPhIndex === currentIdx) return;
+  if (newPhIndex === lastDropIndex) return;
+  lastDropIndex = newPhIndex;
+
+  const targetEl = flexContainer.children[newPhIndex];
+  if (targetEl && targetEl !== ph) {
+    flexContainer.insertBefore(ph, targetEl);
+  }
 }
 
-function handleDrop(e: DragEvent): void {
+function handleDrop(e: DragEvent, flexContainer: HTMLElement, tabletop: HTMLElement | null): void {
   e.preventDefault();
   const fromId = e.dataTransfer?.getData('text/plain');
-  const toEl = (e.currentTarget as HTMLElement).closest('[data-page-id]') as HTMLElement;
-  const toId = toEl?.getAttribute('data-page-id');
-  if (!fromId || !toId || fromId === toId) return;
+  const currentTarget = e.currentTarget as HTMLElement;
+  let toIndex: number;
+  if (currentTarget.id === 'drop-placeholder') {
+    toIndex = Array.from(flexContainer.children).indexOf(currentTarget);
+  } else {
+    const toEl = currentTarget.closest('[data-page-id]') as HTMLElement;
+    const toId = toEl?.getAttribute('data-page-id');
+    if (!toId || fromId === toId) {
+      dragPlaceholder?.remove();
+      dragPlaceholder = null;
+      return;
+    }
+    toIndex = state.findIndex((p) => p.id === toId);
+  }
+  lastDropIndex = -1;
+  dragPlaceholder?.remove();
+  dragPlaceholder = null;
+  if (!fromId || toIndex === -1) return;
   const fromIndex = state.findIndex((p) => p.id === fromId);
-  const toIndex = state.findIndex((p) => p.id === toId);
-  if (fromIndex === -1 || toIndex === -1) return;
+  if (fromIndex === -1) return;
   const [removed] = state.splice(fromIndex, 1);
   state.splice(toIndex, 0, removed);
-  const tabletop = document.getElementById('tabletop');
   if (tabletop) renderTabletopContent(tabletop);
 }
 
@@ -218,13 +351,14 @@ function render(): void {
   app.innerHTML = `
     <div class="flex h-screen bg-slate-100">
       <main class="flex-1 flex flex-col p-8 min-w-0">
-        <div id="tabletop" class="flex-1 min-h-96 border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center bg-white/80 hover:border-slate-400 transition-colors cursor-pointer overflow-hidden">
+        <input type="file" id="file-picker" multiple accept="${FILE_INPUT_ACCEPT}" class="hidden" />
+        <div id="tabletop" class="flex-1 min-h-[50vh] border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center bg-white/80 hover:border-slate-400 transition-colors cursor-pointer overflow-hidden">
         </div>
       </main>
       <aside class="w-80 bg-white border-l border-slate-200 p-4 flex flex-col gap-4">
         <h2 class="font-semibold text-slate-800">Actions</h2>
         <button id="export-pdf" class="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed" ${state.length === 0 ? 'disabled' : ''}>
-          Export PDF
+          Create 1 Combined PDF
         </button>
         <p class="text-sm text-slate-500 mt-auto">DocumentFlow Suite v1</p>
       </aside>
@@ -251,37 +385,26 @@ function render(): void {
       const files = e.dataTransfer?.files;
       if (!files?.length) return;
       e.preventDefault();
-
-      const loading = document.createElement('div');
-      loading.className = 'text-slate-500';
-      loading.textContent = 'Processing…';
-      tabletop.appendChild(loading);
-
-      try {
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          const pages = await processor.normalizeToPages(file);
-          for (let j = 0; j < pages.length; j++) {
-            const p = pages[j];
-            const filename = pages.length > 1 ? `${file.name} (${j + 1})` : file.name;
-            state.push({
-              id: `page-${nextId++}`,
-              canvas: p.canvas,
-              previewDataUrl: canvasToDataUrl(p.canvas),
-              filename,
-            });
-          }
-        }
-        renderTabletopContent(tabletop);
-        const exportBtn = document.getElementById('export-pdf');
-        if (exportBtn) (exportBtn as HTMLButtonElement).disabled = false;
-      } catch (err) {
-        console.error(err);
-        loading.textContent = `Error: ${err instanceof Error ? err.message : 'Failed to process'}`;
-      } finally {
-        loading.remove();
-      }
+      await processAndAddFiles(files, tabletop);
     });
+
+    tabletop.addEventListener('click', (e) => {
+      if (state.length !== 0) return;
+      const target = e.target as HTMLElement;
+      if (!tabletop.contains(target)) return;
+      const picker = document.getElementById('file-picker') as HTMLInputElement | null;
+      if (picker) picker.click();
+    });
+
+    const filePicker = document.getElementById('file-picker') as HTMLInputElement | null;
+    if (filePicker) {
+      filePicker.addEventListener('change', async () => {
+        const files = filePicker.files;
+        if (!files?.length) return;
+        await processAndAddFiles(files, tabletop);
+        filePicker.value = '';
+      });
+    }
   }
 
   const exportBtn = document.getElementById('export-pdf');
@@ -313,11 +436,34 @@ async function handleExport(): Promise<void> {
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
+    showSuccessState();
   } catch (err) {
     console.error(err);
   } finally {
     if (exportBtn) exportBtn.disabled = false;
   }
+}
+
+function showSuccessState(): void {
+  const tabletop = document.getElementById('tabletop');
+  if (!tabletop) return;
+  tabletop.innerHTML = `
+    <div class="flex flex-col items-center justify-center gap-4 text-center p-8">
+      <p class="text-xl font-semibold text-slate-700">Download Started!</p>
+      <button type="button" id="start-new-batch" class="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700">
+        Start New Batch
+      </button>
+    </div>
+  `;
+  document.getElementById('start-new-batch')?.addEventListener('click', startNewBatch);
+}
+
+function startNewBatch(): void {
+  state = [];
+  const tabletop = document.getElementById('tabletop');
+  if (tabletop) renderTabletopContent(tabletop);
+  const exportBtn = document.getElementById('export-pdf') as HTMLButtonElement | null;
+  if (exportBtn) exportBtn.disabled = true;
 }
 
 function initApp(): void {
