@@ -17,6 +17,7 @@ import {
   blobToCanvas,
   rotateBlob90,
 } from '../app-state.js';
+import { log, warn } from '../debug-log.js';
 
 type NormalizeWorkerApi = { normalizeFile: (file: File) => Promise<Blob[]> };
 
@@ -89,8 +90,12 @@ export class DocumentFlowApp extends LitElement {
   }
 
   private updateVisibleThumbnails(): void {
-    if (!this.virtualVisibleLayer || !this.virtualScrollContainer) return;
+    if (!this.virtualVisibleLayer || !this.virtualScrollContainer) {
+      log('virtual', 'updateVisibleThumbnails: no layer or container', { hasLayer: !!this.virtualVisibleLayer, hasContainer: !!this.virtualScrollContainer });
+      return;
+    }
     const { start, end, cols } = this.getVisibleRange(this.virtualScrollContainer);
+    log('virtual', 'updateVisibleThumbnails', { start, end, cols, totalPages: this.pages.length });
     this.virtualVisibleLayer.innerHTML = '';
     const tabletop = this.tabletopEl;
     for (let i = start; i < end; i++) {
@@ -155,6 +160,14 @@ export class DocumentFlowApp extends LitElement {
     if (id) e.dataTransfer?.setData('text/plain', id);
     e.dataTransfer!.effectAllowed = 'move';
     const fromIndex = id ? this.pages.findIndex((p) => p.id === id) : -1;
+    log('drag', 'dragstart', {
+      id,
+      fromIndex,
+      pagesCount: this.pages.length,
+      flexContainerId: flexContainer.id,
+      flexContainerChildren: flexContainer.children.length,
+      tabletop: !!tabletop,
+    });
     const rect = target.getBoundingClientRect();
     const ph = this.ensurePlaceholder(flexContainer, rect.width, rect.height);
     ph.setAttribute('data-state-index', String(Math.max(0, fromIndex)));
@@ -165,32 +178,108 @@ export class DocumentFlowApp extends LitElement {
     target.style.top = `${rect.top}px`;
     target.style.opacity = '0';
     target.style.pointerEvents = 'none';
+
+    const onDocumentDragOver = (ev: DragEvent) => {
+      ev.preventDefault();
+      ev.dataTransfer!.dropEffect = 'move';
+      this.handleContainerDragOver(ev);
+    };
+    const onDocumentDrop = (ev: DragEvent) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      this.handleContainerDrop(ev);
+      cleanup();
+    };
+    const cleanup = () => {
+      document.removeEventListener('dragover', onDocumentDragOver, true);
+      document.removeEventListener('drop', onDocumentDrop, true);
+      document.removeEventListener('dragend', onDragEnd, true);
+    };
     const onDragEnd = () => {
+      log('drag', 'dragend');
+      cleanup();
       this.lastDropIndex = -1;
       this.dragPlaceholder?.remove();
       this.dragPlaceholder = null;
       if (this.tabletopEl) this.renderTabletopContent(this.tabletopEl);
     };
+
+    document.addEventListener('dragover', onDocumentDragOver, { capture: true });
+    document.addEventListener('drop', onDocumentDrop, { capture: true });
     document.addEventListener('dragend', onDragEnd, { once: true, capture: true });
     ph.addEventListener('dragover', (ev: Event) => this.handleDragOver(ev as DragEvent, flexContainer));
     ph.addEventListener('drop', (ev: Event) => this.handleDrop(ev as DragEvent, flexContainer, tabletop));
+  }
+
+  /** Container-level dragover so the layer always accepts the drag (fixes drag cancelled when events don't hit children). */
+  private handleContainerDragOver(e: DragEvent): void {
+    e.preventDefault();
+    e.dataTransfer!.dropEffect = 'move';
+    const flexContainer = this.virtualVisibleLayer;
+    if (!flexContainer) return;
+    const ph = flexContainer.querySelector('#drop-placeholder') as HTMLElement | null;
+    if (!ph) return;
+    const under = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+    const over = under?.closest?.('[data-page-id]') as HTMLElement | null;
+    if (!over || over.closest('#drop-placeholder')) return;
+    const overStateIndex = parseInt(over.getAttribute('data-index') ?? '-1', 10);
+    const phStateIndex = parseInt(ph.getAttribute('data-state-index') ?? '-1', 10);
+    if (overStateIndex < 0 || overStateIndex === phStateIndex || overStateIndex === this.lastDropIndex) return;
+    this.lastDropIndex = overStateIndex;
+    ph.setAttribute('data-state-index', String(overStateIndex));
+    const targetEl = Array.from(flexContainer.children).find(
+      (el) => (el as HTMLElement).getAttribute('data-index') === String(overStateIndex)
+    );
+    log('drag', 'dragover (container)', { overStateIndex, phStateIndex, foundTarget: !!targetEl });
+    if (targetEl && targetEl !== ph) flexContainer.insertBefore(ph, targetEl);
+  }
+
+  /** Container-level drop so we get the drop even when the release happens over the container. */
+  private handleContainerDrop(e: DragEvent): void {
+    e.preventDefault();
+    const fromId = e.dataTransfer?.getData('text/plain');
+    const ph = this.virtualVisibleLayer?.querySelector('#drop-placeholder') as HTMLElement | null;
+    const toIndex = ph
+      ? parseInt(ph.getAttribute('data-state-index') ?? '0', 10)
+      : -1;
+    log('drag', 'drop (container)', { fromId, toIndex });
+    this.lastDropIndex = -1;
+    this.dragPlaceholder?.remove();
+    this.dragPlaceholder = null;
+    if (!fromId || toIndex < 0) return;
+    const fromIndex = this.pages.findIndex((p) => p.id === fromId);
+    if (fromIndex === -1) return;
+    const next = [...this.pages];
+    const [removed] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, removed);
+    this.pages = next;
+    if (this.tabletopEl) this.renderTabletopContent(this.tabletopEl);
   }
 
   private handleDragOver(e: DragEvent, flexContainer: HTMLElement): void {
     e.preventDefault();
     e.dataTransfer!.dropEffect = 'move';
     const ph = flexContainer.querySelector('#drop-placeholder') as HTMLElement | null;
-    if (!ph) return;
+    if (!ph) {
+      log('drag', 'dragover: no placeholder');
+      return;
+    }
     const over = (e.target as HTMLElement).closest('[data-page-id]') as HTMLElement | null;
     if ((e.target as HTMLElement).closest('#drop-placeholder') || !over) return;
     const overStateIndex = parseInt(over.getAttribute('data-index') ?? '-1', 10);
-    if (overStateIndex < 0 || overStateIndex === parseInt(ph.getAttribute('data-state-index') ?? '-1', 10)) return;
+    const phStateIndex = parseInt(ph.getAttribute('data-state-index') ?? '-1', 10);
+    if (overStateIndex < 0) {
+      log('drag', 'dragover: invalid overStateIndex', { overStateIndex, dataIndex: over.getAttribute('data-index') });
+      return;
+    }
+    if (overStateIndex === phStateIndex) return;
     if (overStateIndex === this.lastDropIndex) return;
     this.lastDropIndex = overStateIndex;
     ph.setAttribute('data-state-index', String(overStateIndex));
     const targetEl = Array.from(flexContainer.children).find(
       (el) => (el as HTMLElement).getAttribute('data-index') === String(overStateIndex)
     );
+    log('drag', 'dragover: move placeholder', { overStateIndex, phStateIndex, foundTarget: !!targetEl, childrenCount: flexContainer.children.length });
     if (targetEl && targetEl !== ph) flexContainer.insertBefore(ph, targetEl);
   }
 
@@ -201,26 +290,36 @@ export class DocumentFlowApp extends LitElement {
     let toIndex: number;
     if (currentTarget.id === 'drop-placeholder') {
       toIndex = parseInt(currentTarget.getAttribute('data-state-index') ?? '0', 10);
+      log('drag', 'drop on placeholder', { fromId, toIndex, dataStateIndex: currentTarget.getAttribute('data-state-index') });
     } else {
       const toEl = currentTarget.closest('[data-page-id]') as HTMLElement;
       const toId = toEl?.getAttribute('data-page-id');
       if (!toId || fromId === toId) {
+        log('drag', 'drop: cancelled (same or no toId)', { fromId, toId });
         this.dragPlaceholder?.remove();
         this.dragPlaceholder = null;
         return;
       }
       toIndex = this.pages.findIndex((p) => p.id === toId);
+      log('drag', 'drop on item', { fromId, toId, toIndex });
     }
     this.lastDropIndex = -1;
     this.dragPlaceholder?.remove();
     this.dragPlaceholder = null;
-    if (!fromId || toIndex === -1) return;
+    if (!fromId || toIndex === -1) {
+      warn('drag', 'drop: early return', { fromId, toIndex });
+      return;
+    }
     const fromIndex = this.pages.findIndex((p) => p.id === fromId);
-    if (fromIndex === -1) return;
+    if (fromIndex === -1) {
+      warn('drag', 'drop: fromId not found in pages', { fromId, pageIds: this.pages.map((p) => p.id) });
+      return;
+    }
     const next = [...this.pages];
     const [removed] = next.splice(fromIndex, 1);
     next.splice(toIndex, 0, removed);
     this.pages = next;
+    log('drag', 'drop: reordered', { fromIndex, toIndex, newOrder: next.map((p) => p.id) });
     if (tabletop) this.renderTabletopContent(tabletop);
   }
 
@@ -246,6 +345,7 @@ export class DocumentFlowApp extends LitElement {
   }
 
   renderTabletopContent(container: HTMLElement): void {
+    log('render', 'renderTabletopContent', { pagesLength: this.pages.length, containerId: container.id });
     if (this.pages.length === 0) {
       container.innerHTML = `
         <div class="text-center text-slate-500 empty-dropzone-content">
@@ -278,6 +378,9 @@ export class DocumentFlowApp extends LitElement {
     this.virtualScrollContainer.addEventListener('scroll', onScrollOrResize);
     this.virtualResizeObserver = new ResizeObserver(onScrollOrResize);
     this.virtualResizeObserver.observe(this.virtualScrollContainer);
+    this.virtualVisibleLayer.addEventListener('dragover', (e: Event) => this.handleContainerDragOver(e as DragEvent));
+    this.virtualVisibleLayer.addEventListener('drop', (e: Event) => this.handleContainerDrop(e as DragEvent));
+    log('render', 'tabletop ready, calling updateVisibleThumbnails', { totalHeight });
     this.updateVisibleThumbnails();
   }
 
@@ -388,6 +491,7 @@ export class DocumentFlowApp extends LitElement {
 
   override firstUpdated(): void {
     const tabletop = this.querySelector('#tabletop') as HTMLElement;
+    log('render', 'firstUpdated', { hasTabletop: !!tabletop, pagesLength: this.pages.length });
     if (tabletop) {
       this.renderTabletopContent(tabletop);
       tabletop.addEventListener('dragover', (e) => {
