@@ -18,12 +18,16 @@ import {
   rotateBlob90,
 } from '../app-state.js';
 import { log } from '../debug-log.js';
-import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
-// --- DnD (commented out for step-by-step rebuild) ---
-// import { dropTargetForElements, monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
-// import { attachClosestEdge, extractClosestEdge, type Edge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
-// import { getReorderDestinationIndex } from '@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index';
-// import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
+import {
+  draggable,
+  dropTargetForElements,
+} from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
+import {
+  attachClosestEdge,
+  extractClosestEdge,
+} from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
+import { getReorderDestinationIndex } from '@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index';
 
 type NormalizeWorkerApi = { normalizeFile: (file: File) => Promise<Blob[]> };
 
@@ -139,7 +143,7 @@ export class DocumentFlowApp extends LitElement {
       thumb.setAttribute('preview', p.previewDataUrl ?? '');
       wrapper.appendChild(thumb);
 
-      // Part 1: draggable. Part 2: visual feedback (opacity) while dragging.
+      // Part 1: draggable. Part 2: visual feedback while dragging.
       const cleanupDraggable = draggable({
         element: wrapper,
         getInitialData: () => ({ id: p.id, index: i }),
@@ -152,7 +156,49 @@ export class DocumentFlowApp extends LitElement {
           wrapper.style.cursor = 'grab';
         },
       });
-      this.visibleCleanups.push(cleanupDraggable);
+
+      // Part 3: drop target. Part 4: reorder on drop. Part 5: hitbox (insert-between).
+      const cleanupDropTarget = dropTargetForElements({
+        element: wrapper,
+        getData: ({ input }) =>
+          attachClosestEdge(
+            { id: p.id, index: i },
+            {
+              element: wrapper,
+              input,
+              allowedEdges: ['left', 'right', 'top', 'bottom'],
+            }
+          ),
+        onDragEnter: () => {
+          wrapper.style.outline = '2px solid #3b82f6';
+          wrapper.style.outlineOffset = '2px';
+        },
+        onDragLeave: () => {
+          wrapper.style.outline = '';
+          wrapper.style.outlineOffset = '';
+        },
+        onDrop: ({ source, self }) => {
+          wrapper.style.outline = '';
+          wrapper.style.outlineOffset = '';
+          const sourceIndex = source.data.index as number;
+          const targetIndex = self.data.index as number;
+          if (source.data.id === self.data.id) return;
+          const closestEdge = extractClosestEdge(self.data);
+          const dest = getReorderDestinationIndex({
+            startIndex: sourceIndex,
+            indexOfTarget: targetIndex,
+            closestEdgeOfTarget: closestEdge,
+            axis: 'horizontal',
+          });
+          const next = [...this.pages];
+          const [removed] = next.splice(sourceIndex, 1);
+          next.splice(dest, 0, removed);
+          this.pages = next;
+          this.requestUpdate();
+        },
+      });
+
+      this.visibleCleanups.push(combine(cleanupDraggable, cleanupDropTarget));
 
       this.virtualVisibleLayer.appendChild(wrapper);
 
