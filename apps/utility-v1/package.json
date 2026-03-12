@@ -9,9 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@atlaskit/pragmatic-drag-and-drop": "^1.7.9",
+    "@atlaskit/pragmatic-drag-and-drop-flourish": "^2.0.12",
+    "@atlaskit/pragmatic-drag-and-drop-hitbox": "^1.1.0",
     "@document-flow/pdf-engine": "workspace:*",
     "@document-flow/ui-library": "workspace:*",
     "comlink": "^4.4.1",
+    "invariant": "^2.2.4",
     "lit": "^3.2.2"
   },
   "devDependencies": {
