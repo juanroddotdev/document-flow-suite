@@ -16,6 +16,20 @@ import { ProcessingService } from '../services/processing-service.js';
 const processingService = new ProcessingService();
 const processor = new DocumentProcessor();
 
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  return 'Something went wrong. Please try again.';
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 @customElement('document-flow-app')
 export class DocumentFlowApp extends LitElement {
   override createRenderRoot(): HTMLElement {
@@ -24,6 +38,7 @@ export class DocumentFlowApp extends LitElement {
 
   @state() pages: PageState[] = [];
   @state() showSuccess = false;
+  @state() errorMessage: string | null = null;
 
   @query('#tabletop') tabletopEl!: HTMLElement;
   @query('#file-picker') filePickerEl!: HTMLInputElement;
@@ -81,21 +96,34 @@ export class DocumentFlowApp extends LitElement {
           if (progressFill) progressFill.style.width = `${(p.current / p.total) * 100}%`;
         }
       );
+      this.errorMessage = null;
       this.pages = [...this.pages, ...newPages];
       this.renderTabletopContent();
     } catch (err) {
       console.error(err);
-      if (progressText) progressText.textContent = `Error: ${err instanceof Error ? err.message : 'Failed to process'}`;
+      this.errorMessage = getErrorMessage(err);
+      this.renderTabletopContent();
     } finally {
       progressWrap.remove();
     }
   }
 
+  private dismissError(): void {
+    this.errorMessage = null;
+    this.renderTabletopContent();
+  }
+
   private renderTabletopContent(): void {
     const container = this.tabletopEl;
     if (!container) return;
+    const errorBanner =
+      this.errorMessage &&
+      `<div class="flex items-center justify-between gap-4 px-4 py-2 bg-red-50 border-b border-red-200 text-red-800 text-sm" role="alert">
+        <span>${escapeHtml(this.errorMessage)}</span>
+        <button type="button" data-dismiss-error class="text-red-600 hover:text-red-800 font-medium" aria-label="Dismiss">Dismiss</button>
+      </div>`;
     if (this.showSuccess) {
-      container.innerHTML = `
+      container.innerHTML = (errorBanner ?? '') + `
         <div class="flex flex-col items-center justify-center gap-4 text-center p-8">
           <p class="text-xl font-semibold text-slate-700">Download Started!</p>
           <button type="button" id="start-new-batch" class="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700">
@@ -103,17 +131,19 @@ export class DocumentFlowApp extends LitElement {
           </button>
         </div>
       `;
+      this.querySelector('[data-dismiss-error]')?.addEventListener('click', () => this.dismissError());
       this.querySelector('#start-new-batch')?.addEventListener('click', () => this.startNewBatch());
       return;
     }
     if (this.pages.length === 0) {
-      container.innerHTML = `
+      container.innerHTML = (errorBanner ?? '') + `
         <div class="text-center text-slate-500 empty-dropzone-content">
           <p class="text-xl font-semibold text-slate-600">Drop Files Anywhere</p>
           <p class="text-sm mt-2">or click to browse</p>
           <p class="text-xs mt-3 text-slate-400">HEIC, TIFF, PNG, JPG, PDF</p>
         </div>
       `;
+      this.querySelector('[data-dismiss-error]')?.addEventListener('click', () => this.dismissError());
       return;
     }
     const thumbnailsHtml = this.pages
@@ -126,12 +156,13 @@ export class DocumentFlowApp extends LitElement {
       )
       .join('');
 
-    container.innerHTML = `
+    container.innerHTML = (errorBanner ?? '') + `
     <div id="thumbnails-flex" class="grid gap-4 p-4 overflow-auto w-full" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); justify-items: center; align-content: start;">
       ${thumbnailsHtml}
     </div>
   `;
 
+    this.querySelector('[data-dismiss-error]')?.addEventListener('click', () => this.dismissError());
     const flexContainer = container.querySelector('#thumbnails-flex') as HTMLElement;
     container.querySelectorAll('file-thumbnail').forEach((el, i) => {
       const p = this.pages[i];
@@ -312,6 +343,8 @@ export class DocumentFlowApp extends LitElement {
       this.showSuccess = true;
     } catch (err) {
       console.error(err);
+      this.errorMessage = getErrorMessage(err);
+      this.renderTabletopContent();
     } finally {
       if (this.exportBtnEl) this.exportBtnEl.disabled = false;
     }
@@ -320,6 +353,7 @@ export class DocumentFlowApp extends LitElement {
   private startNewBatch(): void {
     this.pages = [];
     this.showSuccess = false;
+    this.errorMessage = null;
     this.renderTabletopContent();
     if (this.exportBtnEl) this.exportBtnEl.disabled = true;
   }
@@ -363,7 +397,7 @@ export class DocumentFlowApp extends LitElement {
   }
 
   override updated(changed: Map<string, unknown>): void {
-    if (changed.has('pages') || changed.has('showSuccess')) {
+    if (changed.has('pages') || changed.has('showSuccess') || changed.has('errorMessage')) {
       if (this.tabletopEl) this.renderTabletopContent();
       if (this.exportBtnEl) this.exportBtnEl.disabled = this.pages.length === 0;
     }

@@ -1,7 +1,12 @@
 import imageCompression from 'browser-image-compression';
 
 export type { DocumentFlowError } from './errors.js';
-export { ErrorCode, isDocumentFlowError } from './errors.js';
+export {
+  ErrorCode,
+  isDocumentFlowError,
+  normalizationFailed,
+  exportFailed,
+} from './errors.js';
 export { isHeic } from './file-types.js';
 import heic2any from 'heic2any';
 import { PDFDocument } from 'pdf-lib';
@@ -43,6 +48,12 @@ function blobToCanvas(blob: Blob): Promise<HTMLCanvasElement> {
 }
 
 import { isHeic, isTiff, isPdf, isRasterImage } from './file-types.js';
+import {
+  unsupportedFileType,
+  normalizationFailed,
+  exportFailed,
+  isDocumentFlowError,
+} from './errors.js';
 
 async function normalizeHeic(file: File): Promise<ProcessingPage[]> {
   const result = await heic2any({
@@ -130,24 +141,30 @@ async function downscaleForOptimization(
 
 export class DocumentProcessor {
   async normalizeToPages(file: File): Promise<ProcessingPage[]> {
-    if (isHeic(file)) return normalizeHeic(file);
-    if (isTiff(file)) return normalizeTiff(file);
-    if (isPdf(file)) return normalizePdf(file);
-    if (isRasterImage(file)) return normalizeRaster(file);
-    throw new Error(`Unsupported file type: ${file.type} (${file.name})`);
+    try {
+      if (isHeic(file)) return await normalizeHeic(file);
+      if (isTiff(file)) return await normalizeTiff(file);
+      if (isPdf(file)) return await normalizePdf(file);
+      if (isRasterImage(file)) return await normalizeRaster(file);
+      throw unsupportedFileType(file.name, file.type);
+    } catch (e) {
+      if (isDocumentFlowError(e)) throw e;
+      throw normalizationFailed(file.name, e instanceof Error ? e.message : String(e), e);
+    }
   }
 
   async generateStapledPDF(pages: ProcessingPage[]): Promise<Uint8Array> {
-    if (pages.length === 0) throw new Error('No pages to staple');
+    if (pages.length === 0) throw exportFailed('No pages to staple');
 
-    const sorted = [...pages].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    try {
+      const sorted = [...pages].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-    const addPagesToDoc = async (
-      doc: PDFDocument,
-      sourcePages: ProcessingPage[],
-      useJpeg: boolean,
-      maxDim?: number
-    ) => {
+      const addPagesToDoc = async (
+        doc: PDFDocument,
+        sourcePages: ProcessingPage[],
+        useJpeg: boolean,
+        maxDim?: number
+      ) => {
       for (const page of sourcePages) {
         let canvas = page.canvas;
         if (maxDim) {
@@ -171,18 +188,22 @@ export class DocumentProcessor {
         const pdfPage = doc.getPage(doc.getPageCount() - 1);
         pdfPage.drawImage(img, { x: 0, y: 0, width: widthPt, height: heightPt });
       }
-    };
+      };
 
-    const doc = await PDFDocument.create();
-    await addPagesToDoc(doc, sorted, false);
-    let result = await doc.save();
+      const doc = await PDFDocument.create();
+      await addPagesToDoc(doc, sorted, false);
+      let result = await doc.save();
 
-    if (result.byteLength > MAX_PDF_BYTES) {
-      const doc2 = await PDFDocument.create();
-      await addPagesToDoc(doc2, sorted, true, 2000);
-      result = await doc2.save();
+      if (result.byteLength > MAX_PDF_BYTES) {
+        const doc2 = await PDFDocument.create();
+        await addPagesToDoc(doc2, sorted, true, 2000);
+        result = await doc2.save();
+      }
+
+      return result;
+    } catch (e) {
+      if (isDocumentFlowError(e)) throw e;
+      throw exportFailed(e instanceof Error ? e.message : String(e), e);
     }
-
-    return result;
   }
 }
