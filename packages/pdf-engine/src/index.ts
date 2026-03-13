@@ -2,6 +2,7 @@ import imageCompression from 'browser-image-compression';
 
 export type { DocumentFlowError } from './errors.js';
 export { ErrorCode, isDocumentFlowError } from './errors.js';
+export { isHeic } from './file-types.js';
 import heic2any from 'heic2any';
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
@@ -41,33 +42,7 @@ function blobToCanvas(blob: Blob): Promise<HTMLCanvasElement> {
   });
 }
 
-function isHeic(file: File): boolean {
-  const name = file.name.toLowerCase();
-  const type = file.type.toLowerCase();
-  return (
-    name.endsWith('.heic') ||
-    name.endsWith('.heif') ||
-    type.includes('heic') ||
-    type.includes('heif')
-  );
-}
-
-function isTiff(file: File): boolean {
-  const name = file.name.toLowerCase();
-  const type = file.type.toLowerCase();
-  return name.endsWith('.tiff') || name.endsWith('.tif') || type.includes('tiff');
-}
-
-function isPdf(file: File): boolean {
-  return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-}
-
-function isRasterImage(file: File): boolean {
-  const type = file.type.toLowerCase();
-  return ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp', 'image/webp'].includes(
-    type
-  );
-}
+import { isHeic, isTiff, isPdf, isRasterImage } from './file-types.js';
 
 async function normalizeHeic(file: File): Promise<ProcessingPage[]> {
   const result = await heic2any({

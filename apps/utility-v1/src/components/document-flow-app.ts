@@ -7,8 +7,9 @@ import type { PageState } from '../app-state.js';
 import {
   FILE_INPUT_ACCEPT,
   getDefaultExportName,
-  canvasToDataUrl,
-  rotateCanvas90,
+  blobToPreviewDataUrl,
+  blobToCanvas,
+  rotateBlob90,
 } from '../app-state.js';
 import { ProcessingService } from '../services/processing-service.js';
 
@@ -135,7 +136,7 @@ export class DocumentFlowApp extends LitElement {
     container.querySelectorAll('file-thumbnail').forEach((el, i) => {
       const p = this.pages[i];
       if (p) {
-        el.setAttribute('preview', p.previewDataUrl);
+        el.setAttribute('preview', p.previewDataUrl ?? '');
         el.setAttribute('filename', p.filename);
         el.setAttribute('page-index', String(i + 1));
       }
@@ -266,14 +267,15 @@ export class DocumentFlowApp extends LitElement {
     this.renderTabletopContent();
   }
 
-  private handleRotate(e: Event): void {
+  private async handleRotate(e: Event): Promise<void> {
     const wrapper = (e.target as HTMLElement).closest('[data-page-id]') as HTMLElement;
     const id = wrapper?.getAttribute('data-page-id');
     if (!id) return;
     const page = this.pages.find((p) => p.id === id);
     if (!page) return;
-    page.canvas = rotateCanvas90(page.canvas);
-    page.previewDataUrl = canvasToDataUrl(page.canvas);
+    page.blob = await rotateBlob90(page.blob);
+    page.previewDataUrl = await blobToPreviewDataUrl(page.blob);
+    page.rotation = ((page.rotation + 90) % 360) as 0 | 90 | 180 | 270;
     this.pages = [...this.pages];
     this.renderTabletopContent();
   }
@@ -294,10 +296,11 @@ export class DocumentFlowApp extends LitElement {
       return;
     }
     try {
-      const pages: ProcessingPage[] = this.pages.map((p, i) => ({
-        canvas: p.canvas,
-        order: i,
-      }));
+      const pages: ProcessingPage[] = [];
+      for (let i = 0; i < this.pages.length; i++) {
+        const canvas = await blobToCanvas(this.pages[i].blob);
+        pages.push({ canvas, order: i });
+      }
       const bytes = await processor.generateStapledPDF(pages);
       const blob = new Blob([bytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);

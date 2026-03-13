@@ -51,13 +51,11 @@
 
 ---
 
-## Phase B: Step 5 — Maybe Next
+## Phase B: Step 5 — Done
 
 **What:** Switch to Blobs + worker for memory efficiency.
 
-**When:** Implement after Phase A is verified and you want memory/performance improvements.
-
-**Planned changes:**
+**Implemented changes:**
 - `PageState` stores `blob` instead of `canvas`
 - Processing outputs Blobs; preview generated from Blob
 - Offload heavy work to worker
