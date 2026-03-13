@@ -26,6 +26,9 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 | 9 | **Phase 2 API hand-off** | When moving to client intake: produce the final PDF Blob and POST it to your API (e.g. presigned URL) instead of only offering download. |
 | 10 | **Smart pre-flight validation** | Before processing: reject 0-byte files, detect password-protected PDFs and prompt early, optionally warn on very large files (e.g. >100MB). |
 | 11 | **Privacy-preserving telemetry** | When you need to understand client-side failures (e.g. “Grandma’s corrupt PDF”), add something like Sentry with strict PII scrubbing so you see *why* and *where* it failed, not document content. |
+| 12 | **Document islands for multi-file uploads** | When multiple PDFs or multi-page files are uploaded, render each file as its own draggable block ("island") on the tabletop instead of flattening into one list. Reorder pages within each island; reorder islands to set merge order. Final export merges all islands into one PDF. Scope: all multi-page types. Single-file uploads treated as single-page islands for consistency. Cross-island page moves: no (add later if needed). |
+| 13 | **Incremental upload with Add card** | Currently the file picker only works when the tabletop is empty; once there are pages, clicking does nothing. Allow users to add more files anytime. Add a plus/add card after the last thumbnail so users can click to add more without starting over. |
+| 14 | **Lightweight structure-only versioning** | Store only page IDs and order for checkpoints (e.g. after upload, before bulk delete, or on user action). Cap history (e.g. 5-10 versions). Allows reverting structure without duplicating blobs. |
 
 ---
 
@@ -33,9 +36,9 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 
 | # | Item | Why |
 |---|------|-----|
-| 12 | **Use Preact/React instead of Lit** | Only if the team strongly prefers JSX and is okay adding that dependency; Lit already fits the stack and “framework-agnostic” goal. |
-| 13 | **Exact IndexedDB wrapper** | Choice of localforage vs idb-keyval vs raw IndexedDB is an implementation detail once you commit to session persistence. |
-| 14 | **Hard cap on file size (e.g. 100MB)** | Pre-flight can warn; whether to block or only warn depends on product and user expectations. |
+| 15 | **Use Preact/React instead of Lit** | Only if the team strongly prefers JSX and is okay adding that dependency; Lit already fits the stack and “framework-agnostic” goal. |
+| 16 | **Exact IndexedDB wrapper** | Choice of localforage vs idb-keyval vs raw IndexedDB is an implementation detail once you commit to session persistence. |
+| 17 | **Hard cap on file size (e.g. 100MB)** | Pre-flight can warn; whether to block or only warn depends on product and user expectations. |
 
 ---
 
@@ -43,7 +46,7 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 
 1. **First:** #1 (Workers) + #2/#3 (Blobs + virtualization) — fixes freezing and OOM.
 2. **Then:** #4 (Lit app) + #5 (errors) — maintainability and debuggability.
-3. **When moving toward Phase 2:** #7, #8, #9, #10, #11 (session, queue, API, pre-flight, telemetry).
+3. **When moving toward Phase 2:** #7, #8, #9, #10, #11, #12, #13, #14 (session, queue, API, pre-flight, telemetry, document islands, incremental upload, structure versioning).
 4. **When refining state:** #6 (state machine/store).
 
 ---
@@ -63,8 +66,11 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 | 9      | Do eventually  | [#13 Phase 2 API hand-off](https://github.com/juanroddotdev/document-flow-suite/issues/13) |
 | 10     | Do eventually  | [#14 Smart pre-flight validation](https://github.com/juanroddotdev/document-flow-suite/issues/14) |
 | 11     | Do eventually  | [#15 Privacy-preserving telemetry](https://github.com/juanroddotdev/document-flow-suite/issues/15) |
-| 12     | Maybe          | [#16 Consider Preact/React instead of Lit](https://github.com/juanroddotdev/document-flow-suite/issues/16) |
-| 13     | Maybe          | [#17 Choose IndexedDB wrapper](https://github.com/juanroddotdev/document-flow-suite/issues/17) |
-| 14     | Maybe          | [#18 Hard cap on file size](https://github.com/juanroddotdev/document-flow-suite/issues/18) |
+| 12     | Do eventually  | Document islands for multi-file uploads *(create GitHub issue when ready)* |
+| 13     | Do eventually  | Incremental upload with Add card *(create GitHub issue when ready)* |
+| 14     | Do eventually  | Lightweight structure-only versioning *(create GitHub issue when ready)* |
+| 15     | Maybe          | [#16 Consider Preact/React instead of Lit](https://github.com/juanroddotdev/document-flow-suite/issues/16) |
+| 16     | Maybe          | [#17 Choose IndexedDB wrapper](https://github.com/juanroddotdev/document-flow-suite/issues/17) |
+| 17     | Maybe          | [#18 Hard cap on file size](https://github.com/juanroddotdev/document-flow-suite/issues/18) |
 
 **Labels:** `analysis-todo` plus `priority: should-do` | `priority: eventually` | `priority: maybe`.
