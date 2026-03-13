@@ -1,16 +1,10 @@
 import './style.css';
 import { DocumentProcessor, type ProcessingPage } from '@document-flow/pdf-engine';
 import '@document-flow/ui-library';
+import type { PageState } from './app-state.js';
+import { FILE_INPUT_ACCEPT, getDefaultExportName, sanitizeFilename } from './app-state.js';
 
 const processor = new DocumentProcessor();
-
-interface PageState {
-  id: string;
-  canvas: HTMLCanvasElement;
-  previewDataUrl: string;
-  filename: string;
-  status: 'processing' | 'ready';
-}
 
 let state: PageState[] = [];
 let nextId = 0;
@@ -18,23 +12,8 @@ let nextId = 0;
 let dragPlaceholder: HTMLElement | null = null;
 let lastDropIndex = -1;
 
-
 function canvasToDataUrl(canvas: HTMLCanvasElement): string {
   return canvas.toDataURL('image/jpeg', 0.85);
-}
-
-const INVALID_FILENAME_CHARS = /[/\\:*?"<>|]/g;
-
-function sanitizeFilename(name: string): string {
-  const trimmed = name.trim();
-  if (!trimmed) return '';
-  const sanitized = trimmed.replace(INVALID_FILENAME_CHARS, '_');
-  return sanitized.endsWith('.pdf') ? sanitized : `${sanitized}.pdf`;
-}
-
-function getDefaultExportName(): string {
-  const date = new Date().toISOString().slice(0, 10);
-  return `Standardized_Batch_${date}.pdf`;
 }
 
 function showExportModal(): Promise<string | null> {
@@ -116,9 +95,6 @@ function rotateCanvas90(canvas: HTMLCanvasElement): HTMLCanvasElement {
   ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
   return out;
 }
-
-const FILE_INPUT_ACCEPT =
-  '.heic,.tif,.tiff,.png,.jpg,.jpeg,.pdf,image/heic,image/tiff,image/png,image/jpeg,application/pdf';
 
 async function processAndAddFiles(files: FileList, tabletop: HTMLElement): Promise<void> {
   const progressWrap = document.createElement('div');
