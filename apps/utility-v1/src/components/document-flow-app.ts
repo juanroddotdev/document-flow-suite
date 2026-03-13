@@ -156,13 +156,29 @@ export class DocumentFlowApp extends LitElement {
       )
       .join('');
 
+    const addCardHtml = `
+    <div data-add-card class="flex flex-col items-center justify-center w-full min-w-[160px] min-h-[160px] border-2 border-dashed border-slate-400 rounded-lg bg-slate-50 hover:border-slate-500 hover:bg-slate-100 cursor-pointer transition-colors" role="button" tabindex="0" aria-label="Add more files">
+      <span class="text-3xl text-slate-500">+</span>
+      <span class="text-sm text-slate-600 mt-1">Add files</span>
+    </div>
+  `;
     container.innerHTML = (errorBanner ?? '') + `
     <div id="thumbnails-flex" class="grid gap-4 p-4 overflow-auto w-full" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); justify-items: center; align-content: start;">
       ${thumbnailsHtml}
+      ${addCardHtml}
     </div>
   `;
 
     this.querySelector('[data-dismiss-error]')?.addEventListener('click', () => this.dismissError());
+    const addCard = this.querySelector('[data-add-card]');
+    addCard?.addEventListener('click', () => this.filePickerEl?.click());
+    addCard?.addEventListener('keydown', (e: Event) => {
+      const ev = e as KeyboardEvent;
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        this.filePickerEl?.click();
+      }
+    });
     const flexContainer = container.querySelector('#thumbnails-flex') as HTMLElement;
     container.querySelectorAll('file-thumbnail').forEach((el, i) => {
       const p = this.pages[i];

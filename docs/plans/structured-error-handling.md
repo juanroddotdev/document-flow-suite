@@ -1,7 +1,7 @@
 # Structured Error Handling
 
 **Branch:** `feature/structured-error-handling`  
-**Related:** #5 (analysis-todo-plan), issue #9
+**Related:** [backlog](backlog.md), issue #9
 
 ---
 
