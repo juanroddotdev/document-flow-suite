@@ -8,8 +8,8 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 
 | # | Item | Why |
 |---|------|-----|
-| 1 | **Offload heavy work to Web Workers** | HEIC/TIFF/PDF work on the main thread freezes the UI (e.g. 50 HEIC files). Move `normalizeHeic`, `normalizeTiff`, and PDF generation into workers (e.g. with Comlink). |
-| 2 | **Memory: Blobs instead of live Canvases** | Storing unbounded `HTMLCanvasElement`s in `PageState[]` leads to OOM with many pages. Store normalized pages as **Blob**s; use Canvases only for visible thumbnails and revoke blob URLs when done. |
+| 1 | **Offload heavy work to Web Workers** ✓ Done | HEIC/TIFF/PDF work on the main thread freezes the UI (e.g. 50 HEIC files). Move `normalizeHeic`, `normalizeTiff`, and PDF generation into workers (e.g. with Comlink). *TIFF/PDF/raster run in worker; HEIC stays on main (heic2any requires DOM).* |
+| 2 | **Memory: Blobs instead of live Canvases** ✓ Done | Storing unbounded `HTMLCanvasElement`s in `PageState[]` leads to OOM with many pages. Store normalized pages as **Blob**s; use Canvases only for visible thumbnails and revoke blob URLs when done. |
 | 3 | **Thumbnail virtualization / lazy loading** | Only create thumbnails for visible items so memory and DOM stay bounded as page count grows. |
 | 4 | **Replace imperative main.ts with Lit (or component app)** | ~470 lines of manual DOM in `main.ts` will not scale. Migrate to a Lit app (or Preact/React if you prefer) so you can add rotation, cropping, per-file progress, etc. without a monolith. |
 | 5 | **Structured error handling** | Replace “log and forget” with clear error types and user-facing messages so you can debug and Phase 2 can show “why” something failed. |
@@ -44,8 +44,8 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 
 ## Suggested order
 
-1. **First:** #1 (Workers) + #2/#3 (Blobs + virtualization) — fixes freezing and OOM.
-2. **Then:** #4 (Lit app) + #5 (errors) — maintainability and debuggability.
+1. ~~**First:** #1 (Workers) + #2/#3 (Blobs + virtualization)~~ ✓ #1 and #2 done (PR #20). #3 (virtualization) deferred.
+2. **Then:** #4 (Lit app) + #5 (errors) — maintainability and debuggability. *Lit app done; #5 (structured errors) pending.*
 3. **When moving toward Phase 2:** #7, #8, #9, #10, #11, #12, #13, #14 (session, queue, API, pre-flight, telemetry, document islands, incremental upload, structure versioning).
 4. **When refining state:** #6 (state machine/store).
 
@@ -55,8 +55,8 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 
 | Plan # | Priority       | Issue |
 |--------|----------------|-------|
-| 1      | Should do      | [#5 Offload heavy work to Web Workers](https://github.com/juanroddotdev/document-flow-suite/issues/5) |
-| 2      | Should do      | [#6 Memory: Blobs instead of live Canvases](https://github.com/juanroddotdev/document-flow-suite/issues/6) |
+| 1      | Should do ✓    | [#5 Offload heavy work to Web Workers](https://github.com/juanroddotdev/document-flow-suite/issues/5) — PR #20 |
+| 2      | Should do ✓    | [#6 Memory: Blobs instead of live Canvases](https://github.com/juanroddotdev/document-flow-suite/issues/6) — PR #20 |
 | 3      | Should do      | [#7 Thumbnail virtualization / lazy loading](https://github.com/juanroddotdev/document-flow-suite/issues/7) |
 | 4      | Should do      | [#8 Replace imperative main.ts with Lit](https://github.com/juanroddotdev/document-flow-suite/issues/8) |
 | 5      | Should do      | [#9 Structured error handling](https://github.com/juanroddotdev/document-flow-suite/issues/9) |

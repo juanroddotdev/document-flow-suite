@@ -1,1 +1,1 @@
-{"root":["./src/main.ts","./src/vite-env.d.ts"],"version":"5.6.3"}
+{"root":["./src/app-state.ts","./src/main.ts","./src/normalize.worker.ts","./src/vite-env.d.ts","./src/components/document-flow-app.ts","./src/components/export-modal.ts","./src/services/processing-service.ts"],"version":"5.6.3"}
