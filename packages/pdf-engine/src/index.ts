@@ -1,4 +1,7 @@
 import imageCompression from 'browser-image-compression';
+
+export type { DocumentFlowError } from './errors.js';
+export { ErrorCode, isDocumentFlowError } from './errors.js';
 import heic2any from 'heic2any';
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
