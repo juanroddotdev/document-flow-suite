@@ -437,6 +437,15 @@ export class DocumentFlowApp extends LitElement {
         </main>
         <aside class="w-80 bg-white border-l border-slate-200 p-4 flex flex-col gap-4">
           <h2 class="font-semibold text-slate-800">Actions</h2>
+          ${this.pages.length > 0
+            ? html`<button
+                type="button"
+                class="px-4 py-2 border-2 border-dashed border-slate-400 text-slate-600 rounded-lg hover:border-slate-500 hover:bg-slate-50"
+                @click=${() => this.filePickerEl?.click()}
+              >
+                + Add files
+              </button>`
+            : ''}
           <button
             id="export-pdf"
             class="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
