@@ -2,7 +2,12 @@
  * Handles file processing to PageState. Uses worker for TIFF/PDF/raster, main thread for HEIC.
  */
 
-import { DocumentProcessor, isHeic } from '@document-flow/pdf-engine';
+import {
+  DocumentProcessor,
+  isHeic,
+  isDocumentFlowError,
+  normalizationFailed,
+} from '@document-flow/pdf-engine';
 import type { PageState } from '../app-state.js';
 import { blobToPreviewDataUrl } from '../app-state.js';
 
@@ -43,6 +48,7 @@ export class ProcessingService {
 
   /**
    * Process files and return new pages to append to existing state.
+   * @throws DocumentFlowError (or rethrows) on failure
    */
   async processFiles(
     files: FileList,
@@ -53,7 +59,8 @@ export class ProcessingService {
     for (let i = 0; i < files.length; i++) {
       onProgress?.({ current: i + 1, total: files.length });
       const file = files[i];
-      const blobs = await this.getBlobsForFile(file);
+      try {
+        const blobs = await this.getBlobsForFile(file);
       for (let j = 0; j < blobs.length; j++) {
         const blob = blobs[j];
         const filename = blobs.length > 1 ? `${file.name} (${j + 1})` : file.name;
@@ -66,6 +73,14 @@ export class ProcessingService {
           status: 'ready',
           rotation: 0,
         });
+      }
+      } catch (e) {
+        if (isDocumentFlowError(e)) throw e;
+        throw normalizationFailed(
+          file.name,
+          e instanceof Error ? e.message : String(e),
+          e
+        );
       }
     }
     return newPages;
