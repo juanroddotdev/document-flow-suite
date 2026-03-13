@@ -4,4 +4,4 @@
 
 ## Checklist
 
-- [ ] Fixes #__ _(see [analysis-todo-plan](docs/plans/analysis-todo-plan.md) for plan → issue mapping)_
+- [ ] Fixes #__ _(see [backlog](docs/plans/backlog.md) for plan → issue mapping)_

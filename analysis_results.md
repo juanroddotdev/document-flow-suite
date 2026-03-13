@@ -1,5 +1,7 @@
 # DocumentFlow Suite: Scalability & Architecture Review
 
+Backlog derived from this → [docs/plans/backlog.md](docs/plans/backlog.md)
+
 Based on the review of the "Zero-Server" strategic vision and the current implementation (`utility-v1` and `pdf-engine`), here are my thoughts and suggestions for scaling the product and codebase.
 
 ## 1. Architectural Suggestions (Codebase & Technical Stack)
