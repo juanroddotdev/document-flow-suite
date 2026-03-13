@@ -1,8 +1,9 @@
 import './style.css';
 import { DocumentProcessor, type ProcessingPage } from '@document-flow/pdf-engine';
 import '@document-flow/ui-library';
+import './components/export-modal.js';
 import type { PageState } from './app-state.js';
-import { FILE_INPUT_ACCEPT, getDefaultExportName, sanitizeFilename } from './app-state.js';
+import { FILE_INPUT_ACCEPT, getDefaultExportName } from './app-state.js';
 
 const processor = new DocumentProcessor();
 
@@ -17,70 +18,24 @@ function canvasToDataUrl(canvas: HTMLCanvasElement): string {
 }
 
 function showExportModal(): Promise<string | null> {
-  const defaultName = getDefaultExportName();
+  const modal = document.getElementById('export-modal') as HTMLElement & { defaultFilename: string; open: boolean };
+  if (!modal) return Promise.resolve(null);
+  modal.defaultFilename = getDefaultExportName();
+  modal.open = true;
   return new Promise((resolve) => {
-    const backdrop = document.createElement('div');
-    backdrop.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-    backdrop.id = 'export-modal-backdrop';
-
-    const card = document.createElement('div');
-    card.className = 'bg-white rounded-xl shadow-xl p-6 w-full max-w-md';
-    card.setAttribute('role', 'dialog');
-    card.setAttribute('aria-label', 'Name your document');
-
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.value = defaultName.replace('.pdf', '');
-    input.className =
-      'w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 mb-4';
-    input.placeholder = 'Document name';
-    input.autofocus = true;
-
-    const btnRow = document.createElement('div');
-    btnRow.className = 'flex gap-2 justify-end';
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.type = 'button';
-    cancelBtn.textContent = 'Cancel';
-    cancelBtn.className =
-      'px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50';
-
-    const exportBtn = document.createElement('button');
-    exportBtn.type = 'button';
-    exportBtn.textContent = 'Export';
-    exportBtn.className = 'px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700';
-
-    function close(result: string | null) {
-      backdrop.remove();
+    let resolved = false;
+    const finish = (result: string | null) => {
+      if (resolved) return;
+      resolved = true;
+      modal.open = false;
+      modal.removeEventListener('export-name', onExportName);
+      modal.removeEventListener('close', onClose);
       resolve(result);
-    }
-
-    cancelBtn.addEventListener('click', () => close(null));
-    exportBtn.addEventListener('click', () => {
-      const raw = input.value.trim() || defaultName.replace('.pdf', '');
-      const filename = sanitizeFilename(raw) || defaultName;
-      close(filename);
-    });
-    backdrop.addEventListener('click', (e) => {
-      if (e.target === backdrop) close(null);
-    });
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') exportBtn.click();
-      if (e.key === 'Escape') close(null);
-    });
-
-    const heading = document.createElement('h3');
-    heading.className = 'text-lg font-semibold text-slate-800 mb-2';
-    heading.textContent = 'Name your document';
-    card.appendChild(heading);
-    card.appendChild(input);
-    btnRow.appendChild(cancelBtn);
-    btnRow.appendChild(exportBtn);
-    card.appendChild(btnRow);
-    backdrop.appendChild(card);
-    document.body.appendChild(backdrop);
-    input.focus();
-    input.select();
+    };
+    const onExportName = (e: Event) => finish((e as CustomEvent<string>).detail);
+    const onClose = () => finish(null);
+    modal.addEventListener('export-name', onExportName);
+    modal.addEventListener('close', onClose);
   });
 }
 
@@ -339,6 +294,7 @@ function render(): void {
         <p class="text-sm text-slate-500 mt-auto">DocumentFlow Suite v1</p>
       </aside>
     </div>
+    <export-modal id="export-modal"></export-modal>
   `;
 
   const tabletop = document.getElementById('tabletop');

@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@document-flow/pdf-engine": "workspace:*",
-    "@document-flow/ui-library": "workspace:*"
+    "@document-flow/ui-library": "workspace:*",
+    "lit": "^3.2.2"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",

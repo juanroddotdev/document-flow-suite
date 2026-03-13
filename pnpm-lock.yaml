@@ -32,6 +32,9 @@ importers:
       '@document-flow/ui-library':
         specifier: workspace:*
         version: link:../../packages/ui-library
+      lit:
+        specifier: ^3.2.2
+        version: 3.3.2
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.0.0
