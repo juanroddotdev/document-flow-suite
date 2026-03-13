@@ -7,25 +7,13 @@ import type { PageState } from '../app-state.js';
 import {
   FILE_INPUT_ACCEPT,
   getDefaultExportName,
+  canvasToDataUrl,
+  rotateCanvas90,
 } from '../app-state.js';
+import { ProcessingService } from '../services/processing-service.js';
 
+const processingService = new ProcessingService();
 const processor = new DocumentProcessor();
-
-function canvasToDataUrl(canvas: HTMLCanvasElement): string {
-  return canvas.toDataURL('image/jpeg', 0.85);
-}
-
-function rotateCanvas90(canvas: HTMLCanvasElement): HTMLCanvasElement {
-  const out = document.createElement('canvas');
-  out.width = canvas.height;
-  out.height = canvas.width;
-  const ctx = out.getContext('2d');
-  if (!ctx) return canvas;
-  ctx.translate(out.width / 2, out.height / 2);
-  ctx.rotate(Math.PI / 2);
-  ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
-  return out;
-}
 
 @customElement('document-flow-app')
 export class DocumentFlowApp extends LitElement {
@@ -84,26 +72,15 @@ export class DocumentFlowApp extends LitElement {
     const progressFill = progressWrap.querySelector('.progress-fill') as HTMLElement;
     tabletop.prepend(progressWrap);
     try {
-      const next = [...this.pages];
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (progressText) progressText.textContent = `Processing file ${i + 1} of ${files.length}`;
-        if (progressFill) progressFill.style.width = `${((i + 1) / files.length) * 100}%`;
-        const pageResults = await processor.normalizeToPages(file);
-        for (let j = 0; j < pageResults.length; j++) {
-          const p = pageResults[j];
-          const filename = pageResults.length > 1 ? `${file.name} (${j + 1})` : file.name;
-          next.push({
-            id: `page-${this.nextId++}`,
-            canvas: p.canvas,
-            previewDataUrl: canvasToDataUrl(p.canvas),
-            filename,
-            status: 'processing',
-          });
+      const newPages = await processingService.processFiles(
+        files,
+        () => `page-${this.nextId++}`,
+        (p) => {
+          if (progressText) progressText.textContent = `Processing file ${p.current} of ${p.total}`;
+          if (progressFill) progressFill.style.width = `${(p.current / p.total) * 100}%`;
         }
-      }
-      next.forEach((p) => (p.status = 'ready'));
-      this.pages = next;
+      );
+      this.pages = [...this.pages, ...newPages];
       this.renderTabletopContent();
     } catch (err) {
       console.error(err);

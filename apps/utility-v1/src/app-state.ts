@@ -30,3 +30,19 @@ export function getDefaultExportName(): string {
   const date = new Date().toISOString().slice(0, 10);
   return `Standardized_Batch_${date}.pdf`;
 }
+
+export function canvasToDataUrl(canvas: HTMLCanvasElement): string {
+  return canvas.toDataURL('image/jpeg', 0.85);
+}
+
+export function rotateCanvas90(canvas: HTMLCanvasElement): HTMLCanvasElement {
+  const out = document.createElement('canvas');
+  out.width = canvas.height;
+  out.height = canvas.width;
+  const ctx = out.getContext('2d');
+  if (!ctx) return canvas;
+  ctx.translate(out.width / 2, out.height / 2);
+  ctx.rotate(Math.PI / 2);
+  ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+  return out;
+}
