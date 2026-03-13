@@ -156,13 +156,29 @@ export class DocumentFlowApp extends LitElement {
       )
       .join('');
 
+    const addCardHtml = `
+    <div data-add-card class="flex flex-col items-center justify-center w-full min-w-[160px] min-h-[160px] border-2 border-dashed border-slate-400 rounded-lg bg-slate-50 hover:border-slate-500 hover:bg-slate-100 cursor-pointer transition-colors" role="button" tabindex="0" aria-label="Add more files">
+      <span class="text-3xl text-slate-500">+</span>
+      <span class="text-sm text-slate-600 mt-1">Add files</span>
+    </div>
+  `;
     container.innerHTML = (errorBanner ?? '') + `
     <div id="thumbnails-flex" class="grid gap-4 p-4 overflow-auto w-full" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); justify-items: center; align-content: start;">
       ${thumbnailsHtml}
+      ${addCardHtml}
     </div>
   `;
 
     this.querySelector('[data-dismiss-error]')?.addEventListener('click', () => this.dismissError());
+    const addCard = this.querySelector('[data-add-card]');
+    addCard?.addEventListener('click', () => this.filePickerEl?.click());
+    addCard?.addEventListener('keydown', (e: Event) => {
+      const ev = e as KeyboardEvent;
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        this.filePickerEl?.click();
+      }
+    });
     const flexContainer = container.querySelector('#thumbnails-flex') as HTMLElement;
     container.querySelectorAll('file-thumbnail').forEach((el, i) => {
       const p = this.pages[i];
@@ -421,6 +437,15 @@ export class DocumentFlowApp extends LitElement {
         </main>
         <aside class="w-80 bg-white border-l border-slate-200 p-4 flex flex-col gap-4">
           <h2 class="font-semibold text-slate-800">Actions</h2>
+          ${this.pages.length > 0
+            ? html`<button
+                type="button"
+                class="px-4 py-2 border-2 border-dashed border-slate-400 text-slate-600 rounded-lg hover:border-slate-500 hover:bg-slate-50"
+                @click=${() => this.filePickerEl?.click()}
+              >
+                + Add files
+              </button>`
+            : ''}
           <button
             id="export-pdf"
             class="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"

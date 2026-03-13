@@ -12,7 +12,7 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 | 2 | **Memory: Blobs instead of live Canvases** ✓ Done | Storing unbounded `HTMLCanvasElement`s in `PageState[]` leads to OOM with many pages. Store normalized pages as **Blob**s; use Canvases only for visible thumbnails and revoke blob URLs when done. |
 | 3 | **Thumbnail virtualization / lazy loading** | Only create thumbnails for visible items so memory and DOM stay bounded as page count grows. |
 | 4 | **Replace imperative main.ts with Lit (or component app)** | ~470 lines of manual DOM in `main.ts` will not scale. Migrate to a Lit app (or Preact/React if you prefer) so you can add rotation, cropping, per-file progress, etc. without a monolith. |
-| 5 | **Structured error handling** | Replace “log and forget” with clear error types and user-facing messages so you can debug and Phase 2 can show “why” something failed. |
+| 5 | **Structured error handling** ✓ Done | Replace “log and forget” with clear error types and user-facing messages so you can debug and Phase 2 can show “why” something failed. |
 
 ---
 
@@ -33,6 +33,20 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 
 ---
 
+## Polish / UX (Phase 1 refinement)
+
+| # | Item | Why |
+|---|------|-----|
+| 19 | **Page count display** | Show "12 pages" in sidebar or header so users see how many pages they have. |
+| 20 | **Success toast after export** | Replace or supplement "Download Started!" with a short toast (ties into #15). |
+| 21 | **Keyboard shortcuts** | Delete to remove selected page; Escape to cancel drag. |
+| 22 | **Export progress** | For large batches, show progress during PDF generation. |
+| 23 | **Clear drag affordance** | Make it obvious what is draggable (e.g. drag handle vs whole card). |
+| 24 | **Mobile touch targets** | Ensure rotate/delete and Add card are large enough on touch devices. |
+| 25 | **Empty tabletop drop hint** | When dragging over empty tabletop, show "Drop to add files" or similar. |
+
+---
+
 ## Maybe (optional or context-dependent)
 
 | # | Item | Why |
@@ -46,9 +60,10 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 ## Suggested order
 
 1. ~~**First:** #1 (Workers) + #2/#3 (Blobs + virtualization)~~ ✓ #1 and #2 done (PR #20). #3 (virtualization) deferred.
-2. **Then:** #4 (Lit app) + #5 (errors) — maintainability and debuggability. *Lit app done; #5 (structured errors) pending.*
-3. **When moving toward Phase 2:** #7, #8, #9, #10, #11, #12, #13, #14, #15 (session, queue, API, pre-flight, telemetry, document islands, incremental upload, structure versioning, banner/toast).
-4. **When refining state:** #6 (state machine/store).
+2. ~~**Then:** #4 (Lit app) + #5 (errors)~~ ✓ Both done (PR #20, #21).
+3. **Phase 1 polish:** #13 (incremental upload), #15 (banner/toast), #19–#25 (Polish/UX).
+4. **When moving toward Phase 2:** #7, #8, #9, #10, #11, #12, #14 (session, queue, API, pre-flight, telemetry, document islands, structure versioning).
+5. **When refining state:** #6 (state machine/store).
 
 ---
 
@@ -60,7 +75,7 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 | 2      | Should do ✓    | [#6 Memory: Blobs instead of live Canvases](https://github.com/juanroddotdev/document-flow-suite/issues/6) — PR #20 |
 | 3      | Should do      | [#7 Thumbnail virtualization / lazy loading](https://github.com/juanroddotdev/document-flow-suite/issues/7) |
 | 4      | Should do      | [#8 Replace imperative main.ts with Lit](https://github.com/juanroddotdev/document-flow-suite/issues/8) |
-| 5      | Should do      | [#9 Structured error handling](https://github.com/juanroddotdev/document-flow-suite/issues/9) |
+| 5      | Should do ✓    | [#9 Structured error handling](https://github.com/juanroddotdev/document-flow-suite/issues/9) — PR #21 |
 | 6      | Do eventually  | [#10 State machine or state store](https://github.com/juanroddotdev/document-flow-suite/issues/10) |
 | 7      | Do eventually  | [#11 Session persistence (IndexedDB)](https://github.com/juanroddotdev/document-flow-suite/issues/11) |
 | 8      | Do eventually  | [#12 Job queue + per-file progress](https://github.com/juanroddotdev/document-flow-suite/issues/12) |
@@ -74,5 +89,12 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 | 16     | Maybe          | [#16 Consider Preact/React instead of Lit](https://github.com/juanroddotdev/document-flow-suite/issues/16) |
 | 17     | Maybe          | [#17 Choose IndexedDB wrapper](https://github.com/juanroddotdev/document-flow-suite/issues/17) |
 | 18     | Maybe          | [#18 Hard cap on file size](https://github.com/juanroddotdev/document-flow-suite/issues/18) |
+| 19     | Polish/UX      | Page count display *(create GitHub issue when ready)* |
+| 20     | Polish/UX      | Success toast after export *(create GitHub issue when ready)* |
+| 21     | Polish/UX      | Keyboard shortcuts *(create GitHub issue when ready)* |
+| 22     | Polish/UX      | Export progress *(create GitHub issue when ready)* |
+| 23     | Polish/UX      | Clear drag affordance *(create GitHub issue when ready)* |
+| 24     | Polish/UX      | Mobile touch targets *(create GitHub issue when ready)* |
+| 25     | Polish/UX      | Empty tabletop drop hint *(create GitHub issue when ready)* |
 
-**Labels:** `analysis-todo` plus `priority: should-do` | `priority: eventually` | `priority: maybe`.
+**Labels:** `analysis-todo` plus `priority: should-do` | `priority: eventually` | `priority: maybe` | `priority: polish`.
