@@ -10,8 +10,8 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 |---|------|-----|
 | 1 | **Offload heavy work to Web Workers** ✓ Done | HEIC/TIFF/PDF work on the main thread freezes the UI (e.g. 50 HEIC files). Move `normalizeHeic`, `normalizeTiff`, and PDF generation into workers (e.g. with Comlink). *TIFF/PDF/raster run in worker; HEIC stays on main (heic2any requires DOM).* |
 | 2 | **Memory: Blobs instead of live Canvases** ✓ Done | Storing unbounded `HTMLCanvasElement`s in `PageState[]` leads to OOM with many pages. Store normalized pages as **Blob**s; use Canvases only for visible thumbnails and revoke blob URLs when done. |
-| 3 | **Thumbnail virtualization / lazy loading** | Only create thumbnails for visible items so memory and DOM stay bounded as page count grows. |
-| 4 | **Replace imperative main.ts with Lit (or component app)** | ~470 lines of manual DOM in `main.ts` will not scale. Migrate to a Lit app (or Preact/React if you prefer) so you can add rotation, cropping, per-file progress, etc. without a monolith. |
+| 3 | **Thumbnail virtualization / lazy loading** _(deferred)_ | Only create thumbnails for visible items so memory and DOM stay bounded as page count grows. |
+| 4 | **Replace imperative main.ts with Lit (or component app)** ✓ Done | ~470 lines of manual DOM in `main.ts` will not scale. Migrate to a Lit app (or Preact/React if you prefer) so you can add rotation, cropping, per-file progress, etc. without a monolith. |
 | 5 | **Structured error handling** ✓ Done | Replace “log and forget” with clear error types and user-facing messages so you can debug and Phase 2 can show “why” something failed. |
 
 ---
@@ -27,7 +27,7 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 | 10 | **Smart pre-flight validation** | Before processing: reject 0-byte files, detect password-protected PDFs and prompt early, optionally warn on very large files (e.g. >100MB). |
 | 11 | **Privacy-preserving telemetry** | When you need to understand client-side failures (e.g. “Grandma’s corrupt PDF”), add something like Sentry with strict PII scrubbing so you see *why* and *where* it failed, not document content. |
 | 12 | **Document islands for multi-file uploads** | When multiple PDFs or multi-page files are uploaded, render each file as its own draggable block ("island") on the tabletop instead of flattening into one list. Reorder pages within each island; reorder islands to set merge order. Final export merges all islands into one PDF. Scope: all multi-page types. Single-file uploads treated as single-page islands for consistency. Cross-island page moves: no (add later if needed). |
-| 13 | **Incremental upload with Add card** | Currently the file picker only works when the tabletop is empty; once there are pages, clicking does nothing. Allow users to add more files anytime. Add a plus/add card after the last thumbnail so users can click to add more without starting over. |
+| 13 | **Incremental upload with Add card** ✓ Done | Currently the file picker only works when the tabletop is empty; once there are pages, clicking does nothing. Allow users to add more files anytime. Add a plus/add card after the last thumbnail so users can click to add more without starting over. |
 | 14 | **Lightweight structure-only versioning** | Store only page IDs and order for checkpoints (e.g. after upload, before bulk delete, or on user action). Cap history (e.g. 5-10 versions). Allows reverting structure without duplicating blobs. |
 | 15 | **Banner/toast for success and error messages** | Replace or supplement inline error banner with a reliable toast or floating notification so users consistently see processing/export success and failure feedback. |
 
@@ -61,9 +61,11 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 
 1. ~~**First:** #1 (Workers) + #2/#3 (Blobs + virtualization)~~ ✓ #1 and #2 done (PR #20). #3 (virtualization) deferred.
 2. ~~**Then:** #4 (Lit app) + #5 (errors)~~ ✓ Both done (PR #20, #21).
-3. **Phase 1 polish:** #13 (incremental upload), #15 (banner/toast), #19–#25 (Polish/UX).
+3. ~~**Phase 1 polish:** #13 (incremental upload)~~ ✓ Done (PR #23). **Remaining:** #15 (banner/toast), #19–#25 (Polish/UX).
 4. **When moving toward Phase 2:** #7, #8, #9, #10, #11, #12, #14 (session, queue, API, pre-flight, telemetry, document islands, structure versioning).
 5. **When refining state:** #6 (state machine/store).
+
+**Recently:** Modular files refactor (utils/, tabletop/) — `refactor/modular-files` branch.
 
 ---
 
@@ -74,7 +76,7 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 | 1      | Should do ✓    | [#5 Offload heavy work to Web Workers](https://github.com/juanroddotdev/document-flow-suite/issues/5) — PR #20 |
 | 2      | Should do ✓    | [#6 Memory: Blobs instead of live Canvases](https://github.com/juanroddotdev/document-flow-suite/issues/6) — PR #20 |
 | 3      | Should do      | [#7 Thumbnail virtualization / lazy loading](https://github.com/juanroddotdev/document-flow-suite/issues/7) |
-| 4      | Should do      | [#8 Replace imperative main.ts with Lit](https://github.com/juanroddotdev/document-flow-suite/issues/8) |
+| 4      | Should do ✓    | [#8 Replace imperative main.ts with Lit](https://github.com/juanroddotdev/document-flow-suite/issues/8) — PR #20 |
 | 5      | Should do ✓    | [#9 Structured error handling](https://github.com/juanroddotdev/document-flow-suite/issues/9) — PR #21 |
 | 6      | Do eventually  | [#10 State machine or state store](https://github.com/juanroddotdev/document-flow-suite/issues/10) |
 | 7      | Do eventually  | [#11 Session persistence (IndexedDB)](https://github.com/juanroddotdev/document-flow-suite/issues/11) |
@@ -83,7 +85,7 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 | 10     | Do eventually  | [#14 Smart pre-flight validation](https://github.com/juanroddotdev/document-flow-suite/issues/14) |
 | 11     | Do eventually  | [#15 Privacy-preserving telemetry](https://github.com/juanroddotdev/document-flow-suite/issues/15) |
 | 12     | Do eventually  | Document islands for multi-file uploads *(create GitHub issue when ready)* |
-| 13     | Do eventually  | Incremental upload with Add card *(create GitHub issue when ready)* |
+| 13     | Do eventually ✓| Incremental upload with Add card — PR #23 |
 | 14     | Do eventually  | Lightweight structure-only versioning *(create GitHub issue when ready)* |
 | 15     | Do eventually  | Banner/toast for success and error messages *(create GitHub issue when ready)* |
 | 16     | Maybe          | [#16 Consider Preact/React instead of Lit](https://github.com/juanroddotdev/document-flow-suite/issues/16) |
