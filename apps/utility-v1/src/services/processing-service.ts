@@ -9,7 +9,7 @@ import {
   normalizationFailed,
 } from '@document-flow/pdf-engine';
 import type { PageState } from '../app-state.js';
-import { blobToPreviewDataUrl } from '../app-state.js';
+import { blobToPreviewDataUrl } from '../utils/blob.js';
 
 type NormalizeWorkerApi = { normalizeFile: (file: File) => Promise<Blob[]> };
 
