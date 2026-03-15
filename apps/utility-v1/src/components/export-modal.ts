@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { sanitizeFilename } from '../app-state.js';
+import { sanitizeFilename } from '../utils/filename.js';
 
 @customElement('export-modal')
 export class ExportModal extends LitElement {
