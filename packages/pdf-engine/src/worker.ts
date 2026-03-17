@@ -32,10 +32,66 @@ async function normalizeTiff(file: File): Promise<Blob[]> {
   return blobs;
 }
 
+class OffscreenCanvasFactory {
+  create(width: number, height: number) {
+    const canvas = new OffscreenCanvas(width, height);
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Could not get canvas context');
+    return { canvas, context };
+  }
+  reset(
+    canvasAndContext: { canvas: OffscreenCanvas; context: CanvasRenderingContext2D },
+    width: number,
+    height: number
+  ) {
+    canvasAndContext.canvas.width = width;
+    canvasAndContext.canvas.height = height;
+  }
+  destroy(
+    canvasAndContext: { canvas: OffscreenCanvas; context: CanvasRenderingContext2D }
+  ) {
+    canvasAndContext.canvas.width = 0;
+    canvasAndContext.canvas.height = 0;
+  }
+}
+
 async function normalizePdf(file: File): Promise<Blob[]> {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
   const data = new Uint8Array(await file.arrayBuffer());
-  const loadingTask = pdfjsLib.getDocument({ data });
+
+  const createSvgStub = (): Record<string, unknown> => ({
+    setAttribute: () => {},
+    setAttributeNS: () => {},
+    getAttribute: () => null,
+    appendChild: (child: unknown) => child,
+    append: () => {},
+    removeChild: () => null,
+    style: {},
+    childNodes: [],
+  });
+
+  const bodyStub = createSvgStub();
+  const documentElementStub = createSvgStub();
+
+  const ownerDocument = {
+    body: bodyStub,
+    documentElement: documentElementStub,
+    createElement: (name: string) => {
+      if (name === 'canvas') return new OffscreenCanvas(1, 1);
+      return createSvgStub();
+    },
+    createElementNS: (_ns: string, qualifiedName: string) => {
+      const localName = qualifiedName.includes(':') ? qualifiedName.split(':')[1] : qualifiedName;
+      if (localName === 'canvas') return new OffscreenCanvas(1, 1);
+      return createSvgStub();
+    },
+  } as unknown as Document;
+
+  const loadingTask = pdfjsLib.getDocument({
+    data,
+    ownerDocument,
+    canvasFactory: OffscreenCanvasFactory,
+  } as Parameters<typeof pdfjsLib.getDocument>[0]);
   const pdf = await loadingTask.promise;
   const numPages = pdf.numPages;
   const blobs: Blob[] = [];
@@ -74,7 +130,11 @@ export async function normalizeFileInWorker(file: File): Promise<Blob[]> {
     throw new Error(`UNSUPPORTED_FILE_TYPE: ${file.type} (${file.name}). Use main thread for HEIC.`);
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
+    const name = e instanceof Error ? e.name : '';
     if (message.startsWith('UNSUPPORTED_FILE_TYPE:')) throw e;
+    if (/password|PasswordException/i.test(message) || /PasswordException/i.test(name)) {
+      throw new Error('NORMALIZATION_FAILED: This PDF is password-protected. Remove the password and try again.');
+    }
     throw new Error(`NORMALIZATION_FAILED: ${message}`);
   }
 }

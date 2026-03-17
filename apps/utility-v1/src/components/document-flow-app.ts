@@ -3,11 +3,14 @@ import { customElement, state, query } from 'lit/decorators.js';
 import { DocumentProcessor, type ProcessingPage } from '@document-flow/pdf-engine';
 import '@document-flow/ui-library';
 import './export-modal.js';
+import './toast-container.js';
 import type { PageState } from '../app-state.js';
 import { FILE_INPUT_ACCEPT } from '../app-state.js';
 import { ProcessingService } from '../services/processing-service.js';
 import { getErrorMessage } from '../utils/error.js';
 import { getDefaultExportName } from '../utils/filename.js';
+import { validateFiles } from '../utils/preflight.js';
+import { showToast } from '../utils/toast.js';
 import {
   blobToPreviewDataUrl,
   blobToCanvas,
@@ -72,19 +75,53 @@ export class DocumentFlowApp extends LitElement {
   private async processAndAddFiles(files: FileList): Promise<void> {
     const tabletop = this.tabletopEl;
     if (!tabletop) return;
+
+    const { valid, errors } = validateFiles(files);
+    if (errors.length > 0) {
+      const msg = errors.map((e) => `${e.fileName}: ${e.reason}`).join(' ');
+      this.errorMessage = msg;
+      showToast('Some files could not be added', 'error', {
+        details: msg,
+        duration: 10000,
+      });
+      this.renderTabletopContent();
+      return;
+    }
+    if (valid.length === 0) return;
+
+    const validFileList = (() => {
+      const dt = new DataTransfer();
+      valid.forEach((f) => dt.items.add(f));
+      return dt.files;
+    })();
+
     const progress = createProgressBar(tabletop);
     try {
       const newPages = await processingService.processFiles(
-        files,
+        validFileList,
         () => `page-${this.nextId++}`,
         progress.update
       );
       this.errorMessage = null;
       this.pages = [...this.pages, ...newPages];
+      const addedCount = newPages.length;
+      const fileCount = validFileList.length;
+      showToast(
+        `Added ${addedCount} page${addedCount !== 1 ? 's' : ''} from ${fileCount} file${fileCount !== 1 ? 's' : ''}`,
+        'success',
+        {
+          details: newPages.map((p) => p.filename).join(', '),
+        }
+      );
       this.renderTabletopContent();
     } catch (err) {
       console.error(err);
-      this.errorMessage = getErrorMessage(err);
+      const msg = getErrorMessage(err);
+      this.errorMessage = msg;
+      showToast('Processing failed', 'error', {
+        details: msg,
+        duration: 10000,
+      });
       this.renderTabletopContent();
     } finally {
       progress.remove();
@@ -209,9 +246,17 @@ export class DocumentFlowApp extends LitElement {
       a.click();
       URL.revokeObjectURL(url);
       this.showSuccess = true;
+      showToast(`PDF downloaded: ${filename}`, 'success', {
+        details: `${this.pages.length} page${this.pages.length !== 1 ? 's' : ''} combined`,
+      });
     } catch (err) {
       console.error(err);
-      this.errorMessage = getErrorMessage(err);
+      const msg = getErrorMessage(err);
+      this.errorMessage = msg;
+      showToast('Export failed', 'error', {
+        details: msg,
+        duration: 10000,
+      });
       this.renderTabletopContent();
     } finally {
       if (this.exportBtnEl) this.exportBtnEl.disabled = false;
@@ -268,6 +313,7 @@ export class DocumentFlowApp extends LitElement {
         </main>
         <aside class="w-80 bg-white border-l border-slate-200 p-4 flex flex-col gap-4">
           <h2 class="font-semibold text-slate-800">Actions</h2>
+          ${this.pages.length > 0 ? html`<p class="text-sm text-slate-600">${this.pages.length} page${this.pages.length !== 1 ? 's' : ''}</p>` : ''}
           ${this.pages.length > 0
             ? html`<button
                 type="button"
@@ -289,6 +335,7 @@ export class DocumentFlowApp extends LitElement {
         </aside>
       </div>
       <export-modal id="export-modal"></export-modal>
+      <toast-container></toast-container>
     `;
   }
 }

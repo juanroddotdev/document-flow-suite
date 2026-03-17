@@ -54,6 +54,7 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 | 16 | **Use Preact/React instead of Lit** | Only if the team strongly prefers JSX and is okay adding that dependency; Lit already fits the stack and “framework-agnostic” goal. |
 | 17 | **Exact IndexedDB wrapper** | Choice of localforage vs idb-keyval vs raw IndexedDB is an implementation detail once you commit to session persistence. |
 | 18 | **Hard cap on file size (e.g. 100MB)** | Pre-flight can warn; whether to block or only warn depends on product and user expectations. |
+| 26 | **PDF normalization error on some drag-and-drop files** ✓ Addressed | OffscreenCanvasFactory + fake ownerDocument in pdf-engine worker. Test with design.1.pdf, Projects-1-status-test-6.2.pdf. |
 
 ---
 
@@ -64,6 +65,7 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 3. ~~**Phase 1 polish:** #13 (incremental upload)~~ ✓ Done (PR #23). **Remaining:** #15 (banner/toast), #19–#25 (Polish/UX).
 4. **When moving toward Phase 2:** #7, #8, #9, #10, #11, #12, #14 (session, queue, API, pre-flight, telemetry, document islands, structure versioning).
 5. **When refining state:** #6 (state machine/store).
+6. ~~**Known issue:** #26 (PDF normalization error on some PDFs when drag-and-dropping)~~ ✓ Addressed via OffscreenCanvasFactory + fake ownerDocument in pdf-engine worker.
 
 **Recently:** Modular files refactor (utils/, tabletop/) — `refactor/modular-files` branch.
 
@@ -91,6 +93,7 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 | 16     | Maybe          | [#16 Consider Preact/React instead of Lit](https://github.com/juanroddotdev/document-flow-suite/issues/16) |
 | 17     | Maybe          | [#17 Choose IndexedDB wrapper](https://github.com/juanroddotdev/document-flow-suite/issues/17) |
 | 18     | Maybe          | [#18 Hard cap on file size](https://github.com/juanroddotdev/document-flow-suite/issues/18) |
+| 26     | Maybe ✓        | PDF normalization error — addressed via OffscreenCanvasFactory + ownerDocument |
 | 19     | Polish/UX      | Page count display *(create GitHub issue when ready)* |
 | 20     | Polish/UX      | Success toast after export *(create GitHub issue when ready)* |
 | 21     | Polish/UX      | Keyboard shortcuts *(create GitHub issue when ready)* |
