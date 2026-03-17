@@ -268,6 +268,7 @@ export class DocumentFlowApp extends LitElement {
         </main>
         <aside class="w-80 bg-white border-l border-slate-200 p-4 flex flex-col gap-4">
           <h2 class="font-semibold text-slate-800">Actions</h2>
+          ${this.pages.length > 0 ? html`<p class="text-sm text-slate-600">${this.pages.length} page${this.pages.length !== 1 ? 's' : ''}</p>` : ''}
           ${this.pages.length > 0
             ? html`<button
                 type="button"
