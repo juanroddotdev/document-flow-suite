@@ -21,10 +21,14 @@ export class FileThumbnail extends LitElement {
       position: relative;
       width: 160px;
       height: 160px;
-      border-radius: 0.5rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.05);
       overflow: hidden;
       background: #f9fafb;
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    :host(:hover) .preview-wrapper {
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.08);
     }
     .preview {
       width: 100%;
@@ -60,18 +64,18 @@ export class FileThumbnail extends LitElement {
       justify-content: center;
       z-index: 4;
       border: 2px solid white;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.08);
     }
     .thumbnail-actions {
       position: absolute;
       inset: 0;
-      border-radius: 0.5rem;
+      border-radius: 12px;
       background: rgba(0, 0, 0, 0.35);
       display: flex;
       align-items: center;
       justify-content: center;
       opacity: 0;
-      transition: opacity 0.15s ease;
+      transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 1;
       pointer-events: none;
     }
@@ -120,19 +124,23 @@ export class FileThumbnail extends LitElement {
       bottom: 0;
       left: 0;
       right: 0;
-      padding: 6px 8px;
-      background: rgba(0, 0, 0, 0.6);
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
       color: white;
       font-size: 0.7rem;
       text-align: center;
       word-break: break-all;
       line-height: 1.2;
       z-index: 3;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     .status-overlay {
       position: absolute;
       inset: 0;
-      border-radius: 0.5rem;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -164,11 +172,53 @@ export class FileThumbnail extends LitElement {
       justify-content: center;
       z-index: 4;
       border: 2px solid white;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.08);
     }
     .check-badge svg {
       width: 12px;
       height: 12px;
+    }
+    /* Option 2: Capsule - filename below card */
+    .filename-caption {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: #334155;
+      text-align: center;
+      word-break: break-all;
+      line-height: 1.2;
+    }
+    .filename-with-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .check-inline {
+      flex-shrink: 0;
+      color: #16a34a;
+      display: flex;
+    }
+    .check-inline svg {
+      width: 12px;
+      height: 12px;
+    }
+    /* Option 3: Action-first - minimal border, pop on hover */
+    :host([card-style="action-first"]) .preview-wrapper {
+      border: 1px solid #e2e8f0;
+    }
+    :host([card-style="action-first"]) .filename-overlay {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    :host([card-style="action-first"]:hover) .filename-overlay {
+      opacity: 1;
+    }
+    :host([card-style="action-first"]) .thumbnail-actions {
+      transform: scale(0.95);
+      transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    :host([card-style="action-first"]:hover) .thumbnail-actions {
+      transform: scale(1);
     }
   `;
 
@@ -184,6 +234,9 @@ export class FileThumbnail extends LitElement {
   @property({ type: String })
   status: 'processing' | 'ready' = 'ready';
 
+  @property({ type: String, attribute: 'card-style' })
+  cardStyle: 'glass' | 'capsule' | 'action-first' = 'glass';
+
   private _onRotate(e: Event) {
     e.stopPropagation();
     this.dispatchEvent(new CustomEvent('rotate', { bubbles: true }));
@@ -195,6 +248,10 @@ export class FileThumbnail extends LitElement {
   }
 
   render() {
+    const showOverlay = this.cardStyle === 'glass' || this.cardStyle === 'action-first';
+    const showCheckBadge = this.cardStyle === 'glass' && this.status === 'ready' && this.preview;
+    const showCapsuleCaption = this.cardStyle === 'capsule';
+
     return html`
       <div class="container">
         <div class="preview-wrapper">
@@ -208,19 +265,31 @@ export class FileThumbnail extends LitElement {
                   <div class="spinner"></div>
                 </div>
               `
-            : this.status === 'ready' && this.preview
+            : showCheckBadge
               ? html`
                   <span class="check-badge" title="Ready">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                   </span>
                 `
               : ''}
-          <div class="filename-overlay">${this.filename}</div>
+          ${showOverlay ? html`<div class="filename-overlay">${this.filename}</div>` : ''}
           <div class="thumbnail-actions">
             <button type="button" class="action-rotate" @click="${this._onRotate}" title="Rotate 90°">${rotateIcon}</button>
             <button type="button" class="action-trash" @click="${this._onDelete}" title="Remove">${trashIcon}</button>
           </div>
         </div>
+        ${showCapsuleCaption
+          ? html`
+              <div class="filename-caption">
+                <div class="filename-with-status">
+                  ${this.status === 'ready' && this.preview
+                    ? html`<span class="check-inline"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>`
+                    : ''}
+                  <span>${this.filename}</span>
+                </div>
+              </div>
+            `
+          : ''}
       </div>
     `;
   }
