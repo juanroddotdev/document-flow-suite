@@ -52,20 +52,26 @@ export function buildSuccessHtml(errorBanner?: string): string {
   );
 }
 
-export function buildThumbnailsHtml(pages: PageState[], errorBanner?: string): string {
+export type CardStyle = 'glass' | 'capsule' | 'action-first';
+
+export function buildThumbnailsHtml(
+  pages: PageState[],
+  errorBanner?: string,
+  cardStyle: CardStyle = 'glass'
+): string {
   const banner = errorBanner ?? '';
   const thumbnailsHtml = pages
     .map(
       (p, i) => `
     <div class="thumbnail-item cursor-grab" data-page-id="${p.id}" data-index="${i}" draggable="true">
-      <file-thumbnail data-page-id="${p.id}" status="${p.status}"></file-thumbnail>
+      <file-thumbnail data-page-id="${p.id}" status="${p.status}" card-style="${cardStyle}"></file-thumbnail>
     </div>
   `
     )
     .join('');
 
   const addCardHtml = `
-    <div data-add-card class="flex flex-col items-center justify-center w-full min-w-[160px] min-h-[160px] border-2 border-dashed border-slate-400 rounded-lg bg-slate-50 hover:border-slate-500 hover:bg-slate-100 cursor-pointer transition-colors" role="button" tabindex="0" aria-label="Add more files">
+    <div data-add-card class="add-card flex flex-col items-center justify-center w-full min-w-[160px] min-h-[160px] border-2 border-dashed border-slate-400 rounded-xl bg-slate-50 hover:border-slate-500 hover:bg-slate-100 cursor-pointer transition-all duration-200" role="button" tabindex="0" aria-label="Add more files">
       <span class="text-3xl text-slate-500">+</span>
       <span class="text-sm text-slate-600 mt-1">Add files</span>
     </div>

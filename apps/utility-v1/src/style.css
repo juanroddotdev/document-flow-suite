@@ -2,6 +2,11 @@
 @source "../*.html";
 @source "./**/*.ts";
 
+/* UI Polish Standards (2026) */
 .thumbnail-item {
-  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.add-card:hover {
+  background-color: rgb(241 245 249);
 }

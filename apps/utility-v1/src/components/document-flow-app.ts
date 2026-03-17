@@ -39,6 +39,7 @@ export class DocumentFlowApp extends LitElement {
   @state() pages: PageState[] = [];
   @state() showSuccess = false;
   @state() errorMessage: string | null = null;
+  @state() cardStyle: 'glass' | 'capsule' | 'action-first' = 'glass';
 
   @query('#tabletop') tabletopEl!: HTMLElement;
   @query('#file-picker') filePickerEl!: HTMLInputElement;
@@ -164,7 +165,7 @@ export class DocumentFlowApp extends LitElement {
       return;
     }
 
-    container.innerHTML = buildThumbnailsHtml(this.pages, errorBanner);
+    container.innerHTML = buildThumbnailsHtml(this.pages, errorBanner, this.cardStyle);
     attachTabletopEvents(container, this.pages, handlers);
   }
 
@@ -289,7 +290,12 @@ export class DocumentFlowApp extends LitElement {
   }
 
   override updated(changed: Map<string, unknown>): void {
-    if (changed.has('pages') || changed.has('showSuccess') || changed.has('errorMessage')) {
+    if (
+      changed.has('pages') ||
+      changed.has('showSuccess') ||
+      changed.has('errorMessage') ||
+      changed.has('cardStyle')
+    ) {
       if (this.tabletopEl) this.renderTabletopContent();
       if (this.exportBtnEl) this.exportBtnEl.disabled = this.pages.length === 0;
     }
@@ -314,6 +320,26 @@ export class DocumentFlowApp extends LitElement {
         <aside class="w-80 bg-white border-l border-slate-200 p-4 flex flex-col gap-4">
           <h2 class="font-semibold text-slate-800">Actions</h2>
           ${this.pages.length > 0 ? html`<p class="text-sm text-slate-600">${this.pages.length} page${this.pages.length !== 1 ? 's' : ''}</p>` : ''}
+          <div class="flex flex-col gap-1">
+            <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Card style</span>
+            <div class="flex gap-1">
+              <button
+                type="button"
+                class="px-3 py-1.5 text-sm rounded-md transition-colors ${this.cardStyle === 'glass' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
+                @click=${() => { this.cardStyle = 'glass'; }}
+              >Glass</button>
+              <button
+                type="button"
+                class="px-3 py-1.5 text-sm rounded-md transition-colors ${this.cardStyle === 'capsule' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
+                @click=${() => { this.cardStyle = 'capsule'; }}
+              >Capsule</button>
+              <button
+                type="button"
+                class="px-3 py-1.5 text-sm rounded-md transition-colors ${this.cardStyle === 'action-first' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
+                @click=${() => { this.cardStyle = 'action-first'; }}
+              >Action</button>
+            </div>
+          </div>
           ${this.pages.length > 0
             ? html`<button
                 type="button"
