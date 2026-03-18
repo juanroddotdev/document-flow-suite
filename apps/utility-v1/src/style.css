@@ -10,3 +10,15 @@
 .add-card:hover {
   background-color: rgb(241 245 249);
 }
+
+/* Insertion line: shows where the dragged item will land (Notion-style) */
+.drop-insertion-line {
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #2563eb;
+  border-radius: 1px;
+  pointer-events: none;
+}
