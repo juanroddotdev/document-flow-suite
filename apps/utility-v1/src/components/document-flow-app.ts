@@ -40,6 +40,7 @@ export class DocumentFlowApp extends LitElement {
   @state() showSuccess = false;
   @state() errorMessage: string | null = null;
   @state() cardStyle: 'glass' | 'capsule' | 'action-first' = 'glass';
+  @state() dragHandleStyle: 'whole-card' | 'side-handle' | 'bent-corner' = 'whole-card';
 
   @query('#tabletop') tabletopEl!: HTMLElement;
   @query('#file-picker') filePickerEl!: HTMLInputElement;
@@ -165,8 +166,8 @@ export class DocumentFlowApp extends LitElement {
       return;
     }
 
-    container.innerHTML = buildThumbnailsHtml(this.pages, errorBanner, this.cardStyle);
-    attachTabletopEvents(container, this.pages, handlers);
+    container.innerHTML = buildThumbnailsHtml(this.pages, errorBanner, this.cardStyle, this.dragHandleStyle);
+    attachTabletopEvents(container, this.pages, handlers, this.dragHandleStyle);
   }
 
   private handleDragStart(e: DragEvent, flexContainer: HTMLElement): void {
@@ -276,6 +277,11 @@ export class DocumentFlowApp extends LitElement {
     const tabletop = this.tabletopEl;
     if (!tabletop) return;
 
+    const saved = localStorage.getItem('document-flow-drag-handle-style');
+    if (saved === 'whole-card' || saved === 'side-handle' || saved === 'bent-corner') {
+      this.dragHandleStyle = saved;
+    }
+
     this.renderTabletopContent();
     setupTabletopListeners(tabletop, () => this.pages.length > 0, {
       onFileDrop: (files) => this.processAndAddFiles(files),
@@ -294,7 +300,8 @@ export class DocumentFlowApp extends LitElement {
       changed.has('pages') ||
       changed.has('showSuccess') ||
       changed.has('errorMessage') ||
-      changed.has('cardStyle')
+      changed.has('cardStyle') ||
+      changed.has('dragHandleStyle')
     ) {
       if (this.tabletopEl) this.renderTabletopContent();
       if (this.exportBtnEl) this.exportBtnEl.disabled = this.pages.length === 0;
@@ -338,6 +345,29 @@ export class DocumentFlowApp extends LitElement {
                 class="px-3 py-1.5 text-sm rounded-md transition-colors ${this.cardStyle === 'action-first' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
                 @click=${() => { this.cardStyle = 'action-first'; }}
               >Action</button>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Drag handle</span>
+            <div class="flex gap-1 flex-wrap">
+              <button
+                type="button"
+                class="px-3 py-1.5 text-sm rounded-md transition-colors ${this.dragHandleStyle === 'whole-card' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
+                @click=${() => { this.dragHandleStyle = 'whole-card'; localStorage.setItem('document-flow-drag-handle-style', 'whole-card'); }}
+                title="Drag from anywhere on the card"
+              >Whole card</button>
+              <button
+                type="button"
+                class="px-3 py-1.5 text-sm rounded-md transition-colors ${this.dragHandleStyle === 'side-handle' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
+                @click=${() => { this.dragHandleStyle = 'side-handle'; localStorage.setItem('document-flow-drag-handle-style', 'side-handle'); }}
+                title="Drag from the side strip"
+              >Side</button>
+              <button
+                type="button"
+                class="px-3 py-1.5 text-sm rounded-md transition-colors ${this.dragHandleStyle === 'bent-corner' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
+                @click=${() => { this.dragHandleStyle = 'bent-corner'; localStorage.setItem('document-flow-drag-handle-style', 'bent-corner'); }}
+                title="Drag from the folded corner"
+              >Bent corner</button>
             </div>
           </div>
           ${this.pages.length > 0

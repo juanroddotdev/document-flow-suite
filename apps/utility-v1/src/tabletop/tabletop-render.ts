@@ -53,11 +53,13 @@ export function buildSuccessHtml(errorBanner?: string): string {
 }
 
 export type CardStyle = 'glass' | 'capsule' | 'action-first';
+export type DragHandleStyle = 'whole-card' | 'side-handle' | 'bent-corner';
 
 export function buildThumbnailsHtml(
   pages: PageState[],
   errorBanner?: string,
-  cardStyle: CardStyle = 'glass'
+  cardStyle: CardStyle = 'glass',
+  _dragHandleStyle: DragHandleStyle = 'whole-card'
 ): string {
   const banner = errorBanner ?? '';
   const thumbnailsHtml = pages
@@ -91,7 +93,8 @@ export function buildThumbnailsHtml(
 export function attachTabletopEvents(
   container: HTMLElement,
   pages: PageState[],
-  handlers: TabletopEventHandlers
+  handlers: TabletopEventHandlers,
+  _dragHandleStyle: DragHandleStyle = 'whole-card'
 ): void {
   container.querySelector('[data-dismiss-error]')?.addEventListener('click', handlers.dismissError);
 
