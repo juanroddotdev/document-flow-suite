@@ -220,6 +220,46 @@ export class FileThumbnail extends LitElement {
     :host([card-style="action-first"]:hover) .thumbnail-actions {
       transform: scale(1);
     }
+    /* Side handle: vertical strip on the left, pops up on hover */
+    .drag-handle-side {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 14px;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.08);
+      border-radius: 12px 0 0 12px;
+      cursor: grab;
+      opacity: 0;
+      transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .drag-handle-side:active {
+      cursor: grabbing;
+    }
+    :host(:hover) .drag-handle-side,
+    .drag-handle-side:hover {
+      opacity: 1;
+    }
+    .drag-handle-side .six-dots {
+      display: flex;
+      gap: 2px;
+    }
+    .drag-handle-side .six-dots .col {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      align-items: center;
+    }
+    .drag-handle-side .six-dots span {
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      background: #64748b;
+    }
   `;
 
   @property({ type: String })
@@ -237,6 +277,9 @@ export class FileThumbnail extends LitElement {
   @property({ type: String, attribute: 'card-style' })
   cardStyle: 'glass' | 'capsule' | 'action-first' = 'glass';
 
+  @property({ type: String, attribute: 'drag-handle-style' })
+  dragHandleStyle: 'whole-card' | 'side-handle' | 'bent-corner' = 'whole-card';
+
   private _onRotate(e: Event) {
     e.stopPropagation();
     this.dispatchEvent(new CustomEvent('rotate', { bubbles: true }));
@@ -252,9 +295,27 @@ export class FileThumbnail extends LitElement {
     const showCheckBadge = this.cardStyle === 'glass' && this.status === 'ready' && this.preview;
     const showCapsuleCaption = this.cardStyle === 'capsule';
 
+    const showSideHandle = this.dragHandleStyle === 'side-handle';
+
     return html`
       <div class="container">
         <div class="preview-wrapper">
+          ${showSideHandle
+            ? html`
+                <div
+                  class="drag-handle-side"
+                  data-drag-handle
+                  draggable="true"
+                  title="Drag to reorder"
+                  aria-label="Drag to reorder"
+                >
+                  <div class="six-dots">
+                    <div class="col"><span></span><span></span><span></span></div>
+                    <div class="col"><span></span><span></span><span></span></div>
+                  </div>
+                </div>
+              `
+            : ''}
           ${this.preview
             ? html`<img class="preview" src="${this.preview}" alt="${this.filename}" />`
             : html`<div class="preview preview-empty">No preview</div>`}

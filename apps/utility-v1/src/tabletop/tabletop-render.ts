@@ -70,7 +70,7 @@ export function buildThumbnailsHtml(
         const cursorClass = isWholeCard ? ' cursor-grab' : '';
         return `
     <div class="thumbnail-item${cursorClass}" data-page-id="${p.id}" data-index="${i}" draggable="${draggable}">
-      <file-thumbnail data-page-id="${p.id}" status="${p.status}" card-style="${cardStyle}"></file-thumbnail>
+      <file-thumbnail data-page-id="${p.id}" status="${p.status}" card-style="${cardStyle}" drag-handle-style="${dragHandleStyle}"></file-thumbnail>
     </div>
   `;
       }

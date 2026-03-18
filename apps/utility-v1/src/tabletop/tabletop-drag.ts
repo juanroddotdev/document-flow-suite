@@ -33,20 +33,21 @@ export class ThumbnailDragController {
     onDragEnd: () => void,
     onReorder: (fromIndex: number, toIndex: number) => void
   ): void {
-    const target = e.currentTarget as HTMLElement;
-    const id = target.getAttribute('data-page-id');
+    const draggable = e.currentTarget as HTMLElement;
+    const wrapper = (draggable.closest('[data-page-id]') ?? draggable) as HTMLElement;
+    const id = wrapper.getAttribute('data-page-id');
     if (id) e.dataTransfer?.setData('text/plain', id);
     e.dataTransfer!.effectAllowed = 'move';
 
-    const rect = target.getBoundingClientRect();
+    const rect = wrapper.getBoundingClientRect();
     const ph = this.ensurePlaceholder(flexContainer, rect.width, rect.height);
-    flexContainer.insertBefore(ph, target);
-    target.setAttribute('data-dragging', 'true');
-    target.style.position = 'absolute';
-    target.style.left = `${rect.left}px`;
-    target.style.top = `${rect.top}px`;
-    target.style.opacity = '0';
-    target.style.pointerEvents = 'none';
+    flexContainer.insertBefore(ph, wrapper);
+    wrapper.setAttribute('data-dragging', 'true');
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = `${rect.left}px`;
+    wrapper.style.top = `${rect.top}px`;
+    wrapper.style.opacity = '0';
+    wrapper.style.pointerEvents = 'none';
 
     document.addEventListener(
       'dragend',
