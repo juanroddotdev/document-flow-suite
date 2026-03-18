@@ -59,16 +59,21 @@ export function buildThumbnailsHtml(
   pages: PageState[],
   errorBanner?: string,
   cardStyle: CardStyle = 'glass',
-  _dragHandleStyle: DragHandleStyle = 'whole-card'
+  dragHandleStyle: DragHandleStyle = 'whole-card'
 ): string {
   const banner = errorBanner ?? '';
+  const isWholeCard = dragHandleStyle === 'whole-card';
   const thumbnailsHtml = pages
     .map(
-      (p, i) => `
-    <div class="thumbnail-item cursor-grab" data-page-id="${p.id}" data-index="${i}" draggable="true">
+      (p, i) => {
+        const draggable = isWholeCard ? 'true' : 'false';
+        const cursorClass = isWholeCard ? ' cursor-grab' : '';
+        return `
+    <div class="thumbnail-item${cursorClass}" data-page-id="${p.id}" data-index="${i}" draggable="${draggable}">
       <file-thumbnail data-page-id="${p.id}" status="${p.status}" card-style="${cardStyle}"></file-thumbnail>
     </div>
-  `
+  `;
+      }
     )
     .join('');
 
@@ -94,7 +99,7 @@ export function attachTabletopEvents(
   container: HTMLElement,
   pages: PageState[],
   handlers: TabletopEventHandlers,
-  _dragHandleStyle: DragHandleStyle = 'whole-card'
+  dragHandleStyle: DragHandleStyle = 'whole-card'
 ): void {
   container.querySelector('[data-dismiss-error]')?.addEventListener('click', handlers.dismissError);
 
@@ -122,7 +127,11 @@ export function attachTabletopEvents(
     }
   });
 
-  container.querySelectorAll('[draggable="true"]').forEach((el) => {
+  const draggables =
+    dragHandleStyle === 'whole-card'
+      ? container.querySelectorAll('.thumbnail-item[draggable="true"]')
+      : container.querySelectorAll('[data-drag-handle][draggable="true"]');
+  draggables.forEach((el) => {
     el.addEventListener('dragstart', (e: Event) =>
       handlers.onDragStart(e as DragEvent, flexContainer)
     );
