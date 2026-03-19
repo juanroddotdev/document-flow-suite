@@ -7,6 +7,12 @@
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Push-aside reflow: the card under the cursor gets a slightly longer, ease-out slide so it feels "pushed" */
+.thumbnail-item.card-pushed {
+  transition-duration: 0.32s;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
 .add-card:hover {
   background-color: rgb(241 245 249);
 }

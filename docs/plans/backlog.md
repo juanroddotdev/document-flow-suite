@@ -47,6 +47,15 @@ Derived from [Scalability & Architecture Review](../../analysis_results.md) (rep
 
 ---
 
+## Design accents (eventually)
+
+| # | Item | Why |
+|---|------|-----|
+| 27 | **Six-dot icon on cards** | Optional visual accent (e.g. left-edge strip with six-dot "grab" icon). Purely decorative; whole-card remains the only drag behavior. |
+| 28 | **Bent corner on cards** | Optional visual accent (folded top-left corner). Purely decorative; whole-card remains the only drag behavior. |
+
+---
+
 ## Maybe (optional or context-dependent)
 
 | # | Item | Why |

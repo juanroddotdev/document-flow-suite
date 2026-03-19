@@ -1,0 +1,13 @@
+---
+description: UI polish standards for 2026 — shadows, corners, micro-interactions, empty states
+globs: "**/*.ts,**/*.css,**/*.html"
+alwaysApply: false
+---
+
+# UI Polish Standards (2026)
+
+- **Shadows:** Never use `box-shadow: 0 0 10px rgba(0,0,0,0.5)`. Instead, use "Layered Shadows": `box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.05)`.
+- **Corners:** Use a standard `border-radius: 12px` for cards and `6px` for internal elements.
+- **Micro-interactions:** Every hover state must have a `transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1)`.
+- **Empty States:** The "Add Files" card should use a dashed border and a subtle `hover:bg-slate-50`.
+- **Glass Overlays:** For metadata over thumbnails, use `backdrop-filter: blur(10px)` with `background: rgba(255, 255, 255, 0.1)`.

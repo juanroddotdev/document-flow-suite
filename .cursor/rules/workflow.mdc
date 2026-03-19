@@ -1,0 +1,17 @@
+---
+description: Plan execution (one step at a time) and branch-after-plan prompt
+alwaysApply: true
+---
+
+# Plan execution
+
+- **One step at a time:** When implementing a plan with multiple todos or steps, complete only **one** step/task per response.
+- **Stop and report:** After completing that step, summarize what was done and **stop**. Do not continue to the next step.
+- **Wait for confirmation:** The user will verify (e.g. run the app, test, review) and then ask to continue. Only then proceed to the next step/task.
+- **Commit after every step:** After completing each step and before stopping, create a git commit for that step’s changes (clear message, e.g. `feat(ui): add drag handle state and switcher`). One step = one commit.
+- **Exception:** If the user explicitly says "complete all" or "don't stop between steps," you may continue through all steps.
+
+# Branch after planning
+
+- **After creating a plan:** Once a plan (with todos or multiple steps) has been created, **always ask** the user: "Do you want to create a new branch for this work? If so, what should we call it?"
+- **Do not assume:** Do not create or switch branches for plan work unless the user has confirmed they want a branch and (optionally) given a name.

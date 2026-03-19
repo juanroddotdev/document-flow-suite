@@ -105,6 +105,8 @@ export class ThumbnailDragController {
     const oldRects = new Map<HTMLElement, DOMRect>();
     children.forEach((el) => oldRects.set(el, el.getBoundingClientRect()));
 
+    flexContainer.querySelectorAll('.card-pushed').forEach((el) => el.classList.remove('card-pushed'));
+
     flexContainer.insertBefore(ph, targetEl);
 
     requestAnimationFrame(() => {
@@ -117,13 +119,17 @@ export class ThumbnailDragController {
         if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
         el.style.transition = 'none';
         el.style.transform = `translate(${dx}px, ${dy}px)`;
+        if (el === over) el.classList.add('card-pushed');
         el.offsetHeight;
         requestAnimationFrame(() => {
-          el.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+          el.style.transition = el === over
+            ? 'transform 0.32s cubic-bezier(0.2, 0, 0, 1)'
+            : 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
           el.style.transform = 'translate(0, 0)';
           const clearTransition = () => {
             el.style.transition = '';
             el.style.transform = '';
+            el.classList.remove('card-pushed');
             el.removeEventListener('transitionend', clearTransition);
           };
           el.addEventListener('transitionend', clearTransition);

@@ -53,27 +53,20 @@ export function buildSuccessHtml(errorBanner?: string): string {
 }
 
 export type CardStyle = 'glass' | 'capsule' | 'action-first';
-export type DragHandleStyle = 'whole-card' | 'side-handle' | 'bent-corner';
 
 export function buildThumbnailsHtml(
   pages: PageState[],
   errorBanner?: string,
-  cardStyle: CardStyle = 'glass',
-  dragHandleStyle: DragHandleStyle = 'whole-card'
+  cardStyle: CardStyle = 'glass'
 ): string {
   const banner = errorBanner ?? '';
-  const isWholeCard = dragHandleStyle === 'whole-card';
   const thumbnailsHtml = pages
     .map(
-      (p, i) => {
-        const draggable = isWholeCard ? 'true' : 'false';
-        const cursorClass = isWholeCard ? ' cursor-grab' : '';
-        return `
-    <div class="thumbnail-item${cursorClass}" data-page-id="${p.id}" data-index="${i}" draggable="${draggable}">
-      <file-thumbnail data-page-id="${p.id}" status="${p.status}" card-style="${cardStyle}" drag-handle-style="${dragHandleStyle}"></file-thumbnail>
+      (p, i) => `
+    <div class="thumbnail-item cursor-grab" data-page-id="${p.id}" data-index="${i}" draggable="true">
+      <file-thumbnail data-page-id="${p.id}" status="${p.status}" card-style="${cardStyle}"></file-thumbnail>
     </div>
-  `;
-      }
+  `
     )
     .join('');
 
@@ -98,8 +91,7 @@ export function buildThumbnailsHtml(
 export function attachTabletopEvents(
   container: HTMLElement,
   pages: PageState[],
-  handlers: TabletopEventHandlers,
-  dragHandleStyle: DragHandleStyle = 'whole-card'
+  handlers: TabletopEventHandlers
 ): void {
   container.querySelector('[data-dismiss-error]')?.addEventListener('click', handlers.dismissError);
 
@@ -127,11 +119,7 @@ export function attachTabletopEvents(
     }
   });
 
-  const draggables =
-    dragHandleStyle === 'whole-card'
-      ? container.querySelectorAll('.thumbnail-item[draggable="true"]')
-      : container.querySelectorAll('[data-drag-handle][draggable="true"]');
-  draggables.forEach((el) => {
+  container.querySelectorAll('.thumbnail-item[draggable="true"]').forEach((el) => {
     el.addEventListener('dragstart', (e: Event) =>
       handlers.onDragStart(e as DragEvent, flexContainer)
     );
