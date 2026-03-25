@@ -8,7 +8,7 @@ import {
   isDocumentFlowError,
   normalizationFailed,
 } from '@document-flow/pdf-engine';
-import type { PageState } from '../app-state.js';
+import type { IslandState, PageState } from '../app-state.js';
 import { blobToPreviewDataUrl } from '../utils/blob.js';
 
 type NormalizeWorkerApi = { normalizeFile: (file: File) => Promise<Blob[]> };
@@ -84,5 +84,51 @@ export class ProcessingService {
       }
     }
     return newPages;
+  }
+
+  /**
+   * Process files into one island per source file (pages ordered within each island).
+   */
+  async processFilesToIslands(
+    files: FileList,
+    getNextIslandId: () => string,
+    getNextPageId: () => string,
+    onProgress?: (progress: ProcessProgress) => void
+  ): Promise<IslandState[]> {
+    const islands: IslandState[] = [];
+    for (let i = 0; i < files.length; i++) {
+      onProgress?.({ current: i + 1, total: files.length });
+      const file = files[i];
+      const pages: PageState[] = [];
+      try {
+        const blobs = await this.getBlobsForFile(file);
+        for (let j = 0; j < blobs.length; j++) {
+          const blob = blobs[j];
+          const filename = blobs.length > 1 ? `${file.name} (${j + 1})` : file.name;
+          const previewDataUrl = await blobToPreviewDataUrl(blob);
+          pages.push({
+            id: getNextPageId(),
+            blob,
+            previewDataUrl,
+            filename,
+            status: 'ready',
+            rotation: 0,
+          });
+        }
+        islands.push({
+          id: getNextIslandId(),
+          label: file.name,
+          pages,
+        });
+      } catch (e) {
+        if (isDocumentFlowError(e)) throw e;
+        throw normalizationFailed(
+          file.name,
+          e instanceof Error ? e.message : String(e),
+          e
+        );
+      }
+    }
+    return islands;
   }
 }

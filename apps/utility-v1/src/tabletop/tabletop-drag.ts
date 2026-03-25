@@ -49,9 +49,8 @@ export class ThumbnailDragController {
     }
     if (this.dragPlaceholder?.parentElement) this.dragPlaceholder.remove();
     this.dragPlaceholder = document.createElement('div');
-    this.dragPlaceholder.id = 'drop-placeholder';
     this.dragPlaceholder.className =
-      'flex-shrink-0 border-2 border-dashed border-slate-400 rounded-lg bg-slate-100/80 rounded-lg relative';
+      'drop-placeholder flex-shrink-0 border-2 border-dashed border-slate-400 rounded-lg bg-slate-100/80 rounded-lg relative';
     this.dragPlaceholder.style.width = `${widthPx}px`;
     this.dragPlaceholder.style.height = `${heightPx}px`;
     this.dragPlaceholder.style.minWidth = `${widthPx}px`;
@@ -177,7 +176,7 @@ export class ThumbnailDragController {
   }
 
   private applyDragOver(flexContainer: HTMLElement, clientX: number, clientY: number): void {
-    const ph = flexContainer.querySelector('#drop-placeholder') as HTMLElement | null;
+    const ph = flexContainer.querySelector('.drop-placeholder') as HTMLElement | null;
     if (!ph) return;
 
     const resolved = resolveInsertBeforeTarget(
@@ -278,7 +277,7 @@ export class ThumbnailDragController {
     const fromId = e.dataTransfer?.getData('text/plain');
     const currentTarget = e.currentTarget as HTMLElement;
     let toIndex: number;
-    if (currentTarget.id === 'drop-placeholder') {
+    if (currentTarget.classList?.contains('drop-placeholder')) {
       toIndex = Array.from(flexContainer.children).indexOf(currentTarget);
     } else {
       const toEl = currentTarget.closest('[data-page-id]') as HTMLElement;

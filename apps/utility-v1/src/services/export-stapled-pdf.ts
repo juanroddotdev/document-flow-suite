@@ -3,7 +3,8 @@
  */
 
 import { DocumentProcessor, type ProcessingPage } from '@document-flow/pdf-engine';
-import type { PageState } from '../app-state.js';
+import type { IslandState, PageState } from '../app-state.js';
+import { flattenPagesInIslandOrder } from '../app-state.js';
 import { blobToCanvas } from '../utils/blob.js';
 
 export async function buildProcessingPages(pages: PageState[]): Promise<ProcessingPage[]> {
@@ -13,6 +14,11 @@ export async function buildProcessingPages(pages: PageState[]): Promise<Processi
     out.push({ canvas, order: i });
   }
   return out;
+}
+
+/** Merged export: island order, then page order within each island. */
+export async function buildProcessingPagesFromIslands(islands: IslandState[]): Promise<ProcessingPage[]> {
+  return buildProcessingPages(flattenPagesInIslandOrder(islands));
 }
 
 export async function downloadStapledPdf(

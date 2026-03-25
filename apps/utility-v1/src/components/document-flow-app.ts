@@ -6,10 +6,10 @@ import './export-modal.js';
 import './toast-container.js';
 import './document-flow-sidebar.js';
 import './preview-lightbox.js';
-import type { PageState } from '../app-state.js';
-import { FILE_INPUT_ACCEPT } from '../app-state.js';
+import type { IslandState } from '../app-state.js';
+import { FILE_INPUT_ACCEPT, flattenPagesInIslandOrder, findPageLocation } from '../app-state.js';
 import { ProcessingService } from '../services/processing-service.js';
-import { buildProcessingPages, downloadStapledPdf } from '../services/export-stapled-pdf.js';
+import { buildProcessingPagesFromIslands, downloadStapledPdf } from '../services/export-stapled-pdf.js';
 import { getErrorMessage } from '../utils/error.js';
 import { getDefaultExportName } from '../utils/filename.js';
 import { validateFiles } from '../utils/preflight.js';
@@ -38,7 +38,7 @@ export class DocumentFlowApp extends LitElement {
     return this;
   }
 
-  @state() pages: PageState[] = [];
+  @state() islands: IslandState[] = [];
   @state() showSuccess = false;
   @state() errorMessage: string | null = null;
   @state() cardStyle: CardStyle = 'glass';
@@ -47,8 +47,21 @@ export class DocumentFlowApp extends LitElement {
   @query('#tabletop') tabletopEl!: HTMLElement;
   @query('#file-picker') filePickerEl!: HTMLInputElement;
 
-  private nextId = 0;
+  private nextIslandId = 0;
+  private nextPageId = 0;
   private dragController = new ThumbnailDragController();
+
+  private getNextIslandId(): string {
+    return `island-${this.nextIslandId++}`;
+  }
+
+  private getNextPageId(): string {
+    return `page-${this.nextPageId++}`;
+  }
+
+  private get totalPageCount(): number {
+    return flattenPagesInIslandOrder(this.islands).length;
+  }
 
   private showExportModal(): Promise<string | null> {
     const modal = queryExportModal(this);
@@ -72,14 +85,19 @@ export class DocumentFlowApp extends LitElement {
     });
   }
 
-  /** Reorder pages after drag-drop; `updated()` refreshes tabletop. */
-  private applyReorder(fromIndex: number, toIndex: number): void {
-    const next = [...this.pages];
-    const [removed] = next.splice(fromIndex, 1);
-    next.splice(toIndex, 0, removed);
-    this.pages = next;
+  /** Reorder pages within one island after drag-drop. */
+  private applyReorderInIsland(islandId: string, fromIndex: number, toIndex: number): void {
+    this.islands = this.islands.map((island) => {
+      if (island.id !== islandId) return island;
+      const pages = [...island.pages];
+      const [removed] = pages.splice(fromIndex, 1);
+      pages.splice(toIndex, 0, removed);
+      return { ...island, pages };
+    });
     requestAnimationFrame(() => {
-      const flex = this.tabletopEl?.querySelector('#thumbnails-flex');
+      const flex = this.tabletopEl?.querySelector(
+        `.thumbnails-flex[data-island-id="${islandId}"]`
+      ) as HTMLElement | undefined;
       const item = flex?.children[toIndex] as HTMLElement | undefined;
       if (item?.classList) {
         item.classList.add('drop-bounce');
@@ -116,20 +134,23 @@ export class DocumentFlowApp extends LitElement {
 
     const progress = createProgressBar(tabletop);
     try {
-      const newPages = await processingService.processFiles(
+      const newIslands = await processingService.processFilesToIslands(
         validFileList,
-        () => `page-${this.nextId++}`,
+        () => this.getNextIslandId(),
+        () => this.getNextPageId(),
         progress.update
       );
       this.errorMessage = null;
-      this.pages = [...this.pages, ...newPages];
-      const addedCount = newPages.length;
+      this.islands = [...this.islands, ...newIslands];
+      const addedPages = newIslands.reduce((n, i) => n + i.pages.length, 0);
       const fileCount = validFileList.length;
       showToast(
-        `Added ${addedCount} page${addedCount !== 1 ? 's' : ''} from ${fileCount} file${fileCount !== 1 ? 's' : ''}`,
+        `Added ${addedPages} page${addedPages !== 1 ? 's' : ''} in ${newIslands.length} package${newIslands.length !== 1 ? 's' : ''} from ${fileCount} file${fileCount !== 1 ? 's' : ''}`,
         'success',
         {
-          details: newPages.map((p) => p.filename).join(', '),
+          details: flattenPagesInIslandOrder(newIslands)
+            .map((p) => p.filename)
+            .join(', '),
         }
       );
     } catch (err) {
@@ -157,9 +178,9 @@ export class DocumentFlowApp extends LitElement {
       onRotate: (e: Event) => this.handleRotate(e),
       onDelete: (e: Event) => this.handleDelete(e),
       onPreviewOpen: (e: CustomEvent<PreviewOpenDetail>) => this.handlePreviewOpen(e),
-      onDragStart: (e: DragEvent, fc: HTMLElement) => this.handleDragStart(e, fc),
-      onDragOver: (e: DragEvent, fc: HTMLElement) => this.handleDragOver(e, fc),
-      onDrop: (e: DragEvent, fc: HTMLElement) => this.handleDrop(e, fc),
+      onDragStart: (e: DragEvent, fc: HTMLElement, islandId: string) => this.handleDragStart(e, fc, islandId),
+      onDragOver: (e: DragEvent, fc: HTMLElement, islandId: string) => this.handleDragOver(e, fc, islandId),
+      onDrop: (e: DragEvent, fc: HTMLElement, islandId: string) => this.handleDrop(e, fc, islandId),
     };
   }
 
@@ -171,40 +192,41 @@ export class DocumentFlowApp extends LitElement {
 
     if (this.showSuccess) {
       container.innerHTML = buildSuccessHtml(errorBanner);
-      attachTabletopEvents(container, this.pages, handlers);
+      attachTabletopEvents(container, [], handlers);
       return;
     }
 
-    if (this.pages.length === 0) {
+    if (this.islands.length === 0) {
       container.innerHTML = buildEmptyDropzoneHtml(errorBanner);
-      attachTabletopEvents(container, this.pages, handlers);
+      attachTabletopEvents(container, [], handlers);
       return;
     }
 
-    container.innerHTML = buildThumbnailsHtml(this.pages, errorBanner, this.cardStyle);
-    attachTabletopEvents(container, this.pages, handlers);
+    container.innerHTML = buildThumbnailsHtml(this.islands, errorBanner, this.cardStyle);
+    attachTabletopEvents(container, this.islands, handlers);
   }
 
-  private handleDragStart(e: DragEvent, flexContainer: HTMLElement): void {
+  private handleDragStart(e: DragEvent, flexContainer: HTMLElement, islandId: string): void {
+    const island = this.islands.find((i) => i.id === islandId);
+    if (!island) return;
     this.dragController.handleDragStart(
       e,
       flexContainer,
-      this.pages,
+      island.pages,
       () => this.renderTabletopContent(),
-      (fromIndex, toIndex) => this.applyReorder(fromIndex, toIndex)
+      (fromIndex, toIndex) => this.applyReorderInIsland(islandId, fromIndex, toIndex)
     );
   }
 
-  private handleDragOver(e: DragEvent, flexContainer: HTMLElement): void {
+  private handleDragOver(e: DragEvent, flexContainer: HTMLElement, _islandId: string): void {
     this.dragController.handleDragOver(e, flexContainer);
   }
 
-  private handleDrop(e: DragEvent, flexContainer: HTMLElement): void {
-    this.dragController.handleDrop(
-      e,
-      flexContainer,
-      this.pages,
-      (fromIndex, toIndex) => this.applyReorder(fromIndex, toIndex)
+  private handleDrop(e: DragEvent, flexContainer: HTMLElement, islandId: string): void {
+    const island = this.islands.find((i) => i.id === islandId);
+    if (!island) return;
+    this.dragController.handleDrop(e, flexContainer, island.pages, (fromIndex, toIndex) =>
+      this.applyReorderInIsland(islandId, fromIndex, toIndex)
     );
   }
 
@@ -212,18 +234,27 @@ export class DocumentFlowApp extends LitElement {
     const wrapper = (e.target as HTMLElement).closest('[data-page-id]') as HTMLElement;
     const id = wrapper?.getAttribute('data-page-id');
     if (!id) return;
-    const page = this.pages.find((p) => p.id === id);
-    if (!page) return;
+    const loc = findPageLocation(this.islands, id);
+    if (!loc) return;
+    const page = this.islands[loc.islandIndex].pages[loc.pageIndex];
     page.blob = await rotateBlob90(page.blob);
     page.previewDataUrl = await blobToPreviewDataUrl(page.blob);
     page.rotation = ((page.rotation + 90) % 360) as 0 | 90 | 180 | 270;
-    this.pages = [...this.pages];
+    this.islands = [...this.islands];
   }
 
   private handleDelete(e: Event): void {
     const id = (e.target as HTMLElement).closest('[data-page-id]')?.getAttribute('data-page-id');
     if (!id) return;
-    this.pages = this.pages.filter((p) => p.id !== id);
+    const loc = findPageLocation(this.islands, id);
+    if (!loc) return;
+    this.islands = this.islands
+      .map((island, idx) => {
+        if (idx !== loc.islandIndex) return island;
+        const pages = island.pages.filter((p) => p.id !== id);
+        return { ...island, pages };
+      })
+      .filter((island) => island.pages.length > 0);
   }
 
   private handlePreviewOpen(e: CustomEvent<PreviewOpenDetail>): void {
@@ -231,15 +262,15 @@ export class DocumentFlowApp extends LitElement {
   }
 
   private async handleExport(): Promise<void> {
-    if (this.pages.length === 0) return;
+    if (this.totalPageCount === 0) return;
     const filename = await this.showExportModal();
     if (!filename) return;
     try {
-      const processingPages = await buildProcessingPages(this.pages);
+      const processingPages = await buildProcessingPagesFromIslands(this.islands);
       await downloadStapledPdf(processor, processingPages, filename);
       this.showSuccess = true;
       showToast(`PDF downloaded: ${filename}`, 'success', {
-        details: `${this.pages.length} page${this.pages.length !== 1 ? 's' : ''} combined`,
+        details: `${this.totalPageCount} page${this.totalPageCount !== 1 ? 's' : ''} combined`,
       });
     } catch (err) {
       console.error(err);
@@ -253,7 +284,7 @@ export class DocumentFlowApp extends LitElement {
   }
 
   private startNewBatch(): void {
-    this.pages = [];
+    this.islands = [];
     this.showSuccess = false;
     this.errorMessage = null;
   }
@@ -267,7 +298,7 @@ export class DocumentFlowApp extends LitElement {
     if (!tabletop) return;
 
     this.renderTabletopContent();
-    setupTabletopListeners(tabletop, () => this.pages.length > 0, {
+    setupTabletopListeners(tabletop, () => this.totalPageCount > 0, {
       onFileDrop: (files) => this.processAndAddFiles(files),
       onEmptyClick: () => this.filePickerEl?.click(),
     });
@@ -281,7 +312,7 @@ export class DocumentFlowApp extends LitElement {
 
   override updated(changed: Map<string, unknown>): void {
     if (
-      changed.has('pages') ||
+      changed.has('islands') ||
       changed.has('showSuccess') ||
       changed.has('errorMessage') ||
       changed.has('cardStyle')
@@ -307,7 +338,7 @@ export class DocumentFlowApp extends LitElement {
           ></div>
         </main>
         <document-flow-sidebar
-          .pageCount=${this.pages.length}
+          .pageCount=${this.totalPageCount}
           .cardStyle=${this.cardStyle}
           @card-style-change=${this.onCardStyleChange}
           @add-files=${() => this.filePickerEl?.click()}

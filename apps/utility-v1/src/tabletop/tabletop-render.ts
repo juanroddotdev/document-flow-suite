@@ -3,7 +3,7 @@
  */
 
 import { escapeHtml } from '../utils/html.js';
-import type { PageState } from '../app-state.js';
+import type { IslandState } from '../app-state.js';
 
 export interface PreviewOpenDetail {
   preview: string;
@@ -17,9 +17,9 @@ export interface TabletopEventHandlers {
   onRotate: (e: Event) => void;
   onDelete: (e: Event) => void;
   onPreviewOpen: (e: CustomEvent<PreviewOpenDetail>) => void;
-  onDragStart: (e: DragEvent, flexContainer: HTMLElement) => void;
-  onDragOver: (e: DragEvent, flexContainer: HTMLElement) => void;
-  onDrop: (e: DragEvent, flexContainer: HTMLElement) => void;
+  onDragStart: (e: DragEvent, flexContainer: HTMLElement, islandId: string) => void;
+  onDragOver: (e: DragEvent, flexContainer: HTMLElement, islandId: string) => void;
+  onDrop: (e: DragEvent, flexContainer: HTMLElement, islandId: string) => void;
 }
 
 function buildErrorBanner(errorMessage: string): string {
@@ -61,19 +61,35 @@ export function buildSuccessHtml(errorBanner?: string): string {
 export type CardStyle = 'glass' | 'capsule' | 'action-first';
 
 export function buildThumbnailsHtml(
-  pages: PageState[],
+  islands: IslandState[],
   errorBanner?: string,
   cardStyle: CardStyle = 'glass'
 ): string {
   const banner = errorBanner ?? '';
-  const thumbnailsHtml = pages
-    .map(
-      (p, i) => `
-    <div class="thumbnail-item cursor-grab" data-page-id="${p.id}" data-index="${i}" draggable="true">
+  const gridStyle =
+    'grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); justify-items: center; align-content: start;';
+
+  let globalPageIndex = 0;
+  const islandSections = islands
+    .map((island) => {
+      const thumbs = island.pages
+        .map((p) => {
+          const idx = globalPageIndex++;
+          return `
+    <div class="thumbnail-item cursor-grab" data-page-id="${p.id}" data-island-id="${island.id}" data-index="${idx}" draggable="true">
       <file-thumbnail data-page-id="${p.id}" status="${p.status}" card-style="${cardStyle}"></file-thumbnail>
-    </div>
-  `
-    )
+    </div>`;
+        })
+        .join('');
+
+      return `
+    <section class="island rounded-xl border border-slate-200 bg-slate-50/60 p-3 shadow-sm" data-island-id="${island.id}">
+      <h3 class="text-sm font-medium text-slate-700 mb-3 px-1">${escapeHtml(island.label)}</h3>
+      <div class="thumbnails-flex grid gap-4 w-full overflow-auto" data-island-id="${island.id}" style="${gridStyle}">
+        ${thumbs}
+      </div>
+    </section>`;
+    })
     .join('');
 
   const addCardHtml = `
@@ -86,8 +102,8 @@ export function buildThumbnailsHtml(
   return (
     banner +
     `
-    <div id="thumbnails-flex" class="grid gap-4 p-4 overflow-auto w-full" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); justify-items: center; align-content: start;">
-      ${thumbnailsHtml}
+    <div class="islands-stack flex flex-col gap-6 p-4 overflow-auto w-full max-h-full">
+      ${islandSections}
       ${addCardHtml}
     </div>
   `
@@ -96,7 +112,7 @@ export function buildThumbnailsHtml(
 
 export function attachTabletopEvents(
   container: HTMLElement,
-  pages: PageState[],
+  islands: IslandState[],
   handlers: TabletopEventHandlers
 ): void {
   container.querySelector('[data-dismiss-error]')?.addEventListener('click', handlers.dismissError);
@@ -113,11 +129,9 @@ export function attachTabletopEvents(
 
   container.querySelector('#start-new-batch')?.addEventListener('click', handlers.startNewBatch);
 
-  const flexContainer = container.querySelector('#thumbnails-flex') as HTMLElement;
-  if (!flexContainer) return;
-
+  const flatPages = islands.flatMap((i) => i.pages);
   container.querySelectorAll('file-thumbnail').forEach((el, i) => {
-    const p = pages[i];
+    const p = flatPages[i];
     if (p) {
       el.setAttribute('preview', p.previewDataUrl ?? '');
       el.setAttribute('filename', p.filename);
@@ -125,16 +139,19 @@ export function attachTabletopEvents(
     }
   });
 
-  container.querySelectorAll('.thumbnail-item[draggable="true"]').forEach((el) => {
-    el.addEventListener('dragstart', (e: Event) =>
-      handlers.onDragStart(e as DragEvent, flexContainer)
-    );
-    el.addEventListener('dragover', (e: Event) =>
-      handlers.onDragOver(e as DragEvent, flexContainer)
-    );
-    el.addEventListener('drop', (e: Event) =>
-      handlers.onDrop(e as DragEvent, flexContainer)
-    );
+  container.querySelectorAll('.thumbnails-flex[data-island-id]').forEach((flexEl) => {
+    const islandId = flexEl.getAttribute('data-island-id');
+    if (!islandId) return;
+    const flex = flexEl as HTMLElement;
+    flex.querySelectorAll('.thumbnail-item[draggable="true"]').forEach((el) => {
+      el.addEventListener('dragstart', (e: Event) =>
+        handlers.onDragStart(e as DragEvent, flex, islandId)
+      );
+      el.addEventListener('dragover', (e: Event) =>
+        handlers.onDragOver(e as DragEvent, flex, islandId)
+      );
+      el.addEventListener('drop', (e: Event) => handlers.onDrop(e as DragEvent, flex, islandId));
+    });
   });
 
   container.querySelectorAll('file-thumbnail').forEach((el) => {
