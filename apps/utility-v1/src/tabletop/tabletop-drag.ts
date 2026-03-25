@@ -120,6 +120,14 @@ export function resolveInsertBeforeTarget(
   return raw;
 }
 
+/** Clamp pointer into rect so raw slot resolution still picks a nearest index when outside the strip. */
+function clampPointToRect(rect: DOMRect, clientX: number, clientY: number): { x: number; y: number } {
+  return {
+    x: Math.min(Math.max(clientX, rect.left), rect.right),
+    y: Math.min(Math.max(clientY, rect.top), rect.bottom),
+  };
+}
+
 export class ThumbnailDragController {
   private dragPlaceholder: HTMLElement | null = null;
   /** Dedupe FLIP when insert slot + hovered card are unchanged (stable keys). */
@@ -128,6 +136,20 @@ export class ThumbnailDragController {
   private lastStableTargetEl: HTMLElement | null = null;
   private pendingDrag: { flex: HTMLElement; x: number; y: number } | null = null;
   private dragOverRaf: number | null = null;
+
+  /** Last pointer during drag (for snap on dragend when drop did not commit). */
+  private lastClientX = 0;
+  private lastClientY = 0;
+  /** True after handleDrop successfully calls onReorder. */
+  private reorderCommitted = false;
+  /** data-page-id of the card being dragged; cleared on dragend. */
+  private draggingFromId: string | null = null;
+  /** Active drag session for snap fallback (cleared on dragend). */
+  private dragSession: {
+    flex: HTMLElement;
+    pages: PageLike[];
+    onReorder: (fromIndex: number, toIndex: number) => void;
+  } | null = null;
 
   ensurePlaceholder(container: HTMLElement, widthPx: number, heightPx: number): HTMLElement {
     if (this.dragPlaceholder && this.dragPlaceholder.parentElement === container) {
@@ -151,6 +173,45 @@ export class ThumbnailDragController {
     return this.dragPlaceholder;
   }
 
+  /**
+   * If the browser never delivered a successful drop, commit reorder from last pointer using raw
+   * geometry (no hysteresis). Pointer is clamped to the flex strip so outside releases snap to the
+   * nearest slot.
+   */
+  private commitSnapIfNeeded(): void {
+    if (this.reorderCommitted) return;
+    const session = this.dragSession;
+    const ph = this.dragPlaceholder;
+    const fromId = this.draggingFromId;
+    if (!session || !ph || !fromId) return;
+
+    const { flex, pages, onReorder } = session;
+    if (!flex.contains(ph)) return;
+
+    const rect = flex.getBoundingClientRect();
+    const { x, y } = clampPointToRect(rect, this.lastClientX, this.lastClientY);
+    const raw = computeRawInsertBeforeTarget(flex, ph, x, y);
+    if (!raw) return;
+    const { targetEl } = raw;
+    if (targetEl === ph || !flex.contains(targetEl)) return;
+
+    if (ph.nextSibling !== targetEl) {
+      flex.insertBefore(ph, targetEl);
+    }
+
+    const toIndex = Array.from(flex.children).indexOf(ph);
+    const fromIndex = pages.findIndex((p) => p.id === fromId);
+    if (fromIndex === -1 || toIndex === -1) return;
+    if (fromIndex === toIndex) return;
+
+    this.lastDropFrameKey = '';
+    this.lastStableTargetEl = null;
+    this.dragPlaceholder?.remove();
+    this.dragPlaceholder = null;
+    this.reorderCommitted = true;
+    onReorder(fromIndex, toIndex);
+  }
+
   handleDragStart(
     e: DragEvent,
     flexContainer: HTMLElement,
@@ -162,6 +223,12 @@ export class ThumbnailDragController {
     const id = target.getAttribute('data-page-id');
     if (id) e.dataTransfer?.setData('text/plain', id);
     e.dataTransfer!.effectAllowed = 'move';
+
+    this.dragSession = { flex: flexContainer, pages, onReorder };
+    this.draggingFromId = id ?? null;
+    this.reorderCommitted = false;
+    this.lastClientX = e.clientX;
+    this.lastClientY = e.clientY;
 
     const rect = target.getBoundingClientRect();
     const ph = this.ensurePlaceholder(flexContainer, rect.width, rect.height);
@@ -179,6 +246,7 @@ export class ThumbnailDragController {
     document.addEventListener(
       'dragend',
       () => {
+        this.commitSnapIfNeeded();
         flexContainer.removeEventListener('dragover', boundDragover);
         if (this.dragOverRaf != null) {
           cancelAnimationFrame(this.dragOverRaf);
@@ -189,6 +257,9 @@ export class ThumbnailDragController {
         this.lastStableTargetEl = null;
         this.dragPlaceholder?.remove();
         this.dragPlaceholder = null;
+        this.dragSession = null;
+        this.draggingFromId = null;
+        this.reorderCommitted = false;
         onDragEnd();
       },
       { once: true, capture: true }
@@ -203,6 +274,8 @@ export class ThumbnailDragController {
   handleDragOver(e: DragEvent, flexContainer: HTMLElement): void {
     e.preventDefault();
     e.dataTransfer!.dropEffect = 'move';
+    this.lastClientX = e.clientX;
+    this.lastClientY = e.clientY;
     this.pendingDrag = { flex: flexContainer, x: e.clientX, y: e.clientY };
     if (this.dragOverRaf != null) return;
     this.dragOverRaf = requestAnimationFrame(() => {
@@ -335,5 +408,6 @@ export class ThumbnailDragController {
     const fromIndex = pages.findIndex((p) => p.id === fromId);
     if (fromIndex === -1) return;
     onReorder(fromIndex, toIndex);
+    this.reorderCommitted = true;
   }
 }
