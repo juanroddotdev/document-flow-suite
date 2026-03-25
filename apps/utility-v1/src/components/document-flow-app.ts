@@ -1,21 +1,19 @@
 import { LitElement, html } from 'lit';
 import { customElement, state, query } from 'lit/decorators.js';
-import { DocumentProcessor, type ProcessingPage } from '@document-flow/pdf-engine';
+import { DocumentProcessor } from '@document-flow/pdf-engine';
 import '@document-flow/ui-library';
 import './export-modal.js';
 import './toast-container.js';
+import './document-flow-sidebar.js';
 import type { PageState } from '../app-state.js';
 import { FILE_INPUT_ACCEPT } from '../app-state.js';
 import { ProcessingService } from '../services/processing-service.js';
+import { buildProcessingPages, downloadStapledPdf } from '../services/export-stapled-pdf.js';
 import { getErrorMessage } from '../utils/error.js';
 import { getDefaultExportName } from '../utils/filename.js';
 import { validateFiles } from '../utils/preflight.js';
 import { showToast } from '../utils/toast.js';
-import {
-  blobToPreviewDataUrl,
-  blobToCanvas,
-  rotateBlob90,
-} from '../utils/blob.js';
+import { blobToPreviewDataUrl, rotateBlob90 } from '../utils/blob.js';
 import { ThumbnailDragController } from '../tabletop/tabletop-drag.js';
 import {
   buildEmptyDropzoneHtml,
@@ -25,7 +23,9 @@ import {
   getErrorBanner,
   createProgressBar,
   setupTabletopListeners,
+  type CardStyle,
 } from '../tabletop/tabletop-render.js';
+import { queryExportModal } from './export-modal-helpers.js';
 
 const processingService = new ProcessingService();
 const processor = new DocumentProcessor();
@@ -39,20 +39,16 @@ export class DocumentFlowApp extends LitElement {
   @state() pages: PageState[] = [];
   @state() showSuccess = false;
   @state() errorMessage: string | null = null;
-  @state() cardStyle: 'glass' | 'capsule' | 'action-first' = 'glass';
+  @state() cardStyle: CardStyle = 'glass';
 
   @query('#tabletop') tabletopEl!: HTMLElement;
   @query('#file-picker') filePickerEl!: HTMLInputElement;
-  @query('#export-pdf') exportBtnEl!: HTMLButtonElement;
 
   private nextId = 0;
   private dragController = new ThumbnailDragController();
 
   private showExportModal(): Promise<string | null> {
-    const modal = this.querySelector('#export-modal') as HTMLElement & {
-      defaultFilename: string;
-      open: boolean;
-    };
+    const modal = queryExportModal(this);
     if (!modal) return Promise.resolve(null);
     modal.defaultFilename = getDefaultExportName();
     modal.open = true;
@@ -73,6 +69,26 @@ export class DocumentFlowApp extends LitElement {
     });
   }
 
+  /** Reorder pages after drag-drop; `updated()` refreshes tabletop. */
+  private applyReorder(fromIndex: number, toIndex: number): void {
+    const next = [...this.pages];
+    const [removed] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, removed);
+    this.pages = next;
+    requestAnimationFrame(() => {
+      const flex = this.tabletopEl?.querySelector('#thumbnails-flex');
+      const item = flex?.children[toIndex] as HTMLElement | undefined;
+      if (item?.classList) {
+        item.classList.add('drop-bounce');
+        const remove = () => {
+          item.classList.remove('drop-bounce');
+          item.removeEventListener('animationend', remove);
+        };
+        item.addEventListener('animationend', remove);
+      }
+    });
+  }
+
   private async processAndAddFiles(files: FileList): Promise<void> {
     const tabletop = this.tabletopEl;
     if (!tabletop) return;
@@ -85,7 +101,6 @@ export class DocumentFlowApp extends LitElement {
         details: msg,
         duration: 10000,
       });
-      this.renderTabletopContent();
       return;
     }
     if (valid.length === 0) return;
@@ -114,7 +129,6 @@ export class DocumentFlowApp extends LitElement {
           details: newPages.map((p) => p.filename).join(', '),
         }
       );
-      this.renderTabletopContent();
     } catch (err) {
       console.error(err);
       const msg = getErrorMessage(err);
@@ -123,7 +137,6 @@ export class DocumentFlowApp extends LitElement {
         details: msg,
         duration: 10000,
       });
-      this.renderTabletopContent();
     } finally {
       progress.remove();
     }
@@ -131,7 +144,6 @@ export class DocumentFlowApp extends LitElement {
 
   private dismissError(): void {
     this.errorMessage = null;
-    this.renderTabletopContent();
   }
 
   private getTabletopHandlers() {
@@ -175,25 +187,7 @@ export class DocumentFlowApp extends LitElement {
       flexContainer,
       this.pages,
       () => this.renderTabletopContent(),
-      (fromIndex, toIndex) => {
-        const next = [...this.pages];
-        const [removed] = next.splice(fromIndex, 1);
-        next.splice(toIndex, 0, removed);
-        this.pages = next;
-        this.renderTabletopContent();
-        requestAnimationFrame(() => {
-          const flex = this.tabletopEl?.querySelector('#thumbnails-flex');
-          const item = flex?.children[toIndex] as HTMLElement | undefined;
-          if (item?.classList) {
-            item.classList.add('drop-bounce');
-            const remove = () => {
-              item.classList.remove('drop-bounce');
-              item.removeEventListener('animationend', remove);
-            };
-            item.addEventListener('animationend', remove);
-          }
-        });
-      }
+      (fromIndex, toIndex) => this.applyReorder(fromIndex, toIndex)
     );
   }
 
@@ -206,25 +200,7 @@ export class DocumentFlowApp extends LitElement {
       e,
       flexContainer,
       this.pages,
-      (fromIndex, toIndex) => {
-        const next = [...this.pages];
-        const [removed] = next.splice(fromIndex, 1);
-        next.splice(toIndex, 0, removed);
-        this.pages = next;
-        this.renderTabletopContent();
-        requestAnimationFrame(() => {
-          const flex = this.tabletopEl?.querySelector('#thumbnails-flex');
-          const item = flex?.children[toIndex] as HTMLElement | undefined;
-          if (item?.classList) {
-            item.classList.add('drop-bounce');
-            const remove = () => {
-              item.classList.remove('drop-bounce');
-              item.removeEventListener('animationend', remove);
-            };
-            item.addEventListener('animationend', remove);
-          }
-        });
-      }
+      (fromIndex, toIndex) => this.applyReorder(fromIndex, toIndex)
     );
   }
 
@@ -238,38 +214,21 @@ export class DocumentFlowApp extends LitElement {
     page.previewDataUrl = await blobToPreviewDataUrl(page.blob);
     page.rotation = ((page.rotation + 90) % 360) as 0 | 90 | 180 | 270;
     this.pages = [...this.pages];
-    this.renderTabletopContent();
   }
 
   private handleDelete(e: Event): void {
     const id = (e.target as HTMLElement).closest('[data-page-id]')?.getAttribute('data-page-id');
     if (!id) return;
     this.pages = this.pages.filter((p) => p.id !== id);
-    this.renderTabletopContent();
   }
 
   private async handleExport(): Promise<void> {
     if (this.pages.length === 0) return;
-    if (this.exportBtnEl) this.exportBtnEl.disabled = true;
     const filename = await this.showExportModal();
-    if (!filename) {
-      if (this.exportBtnEl) this.exportBtnEl.disabled = false;
-      return;
-    }
+    if (!filename) return;
     try {
-      const pages: ProcessingPage[] = [];
-      for (let i = 0; i < this.pages.length; i++) {
-        const canvas = await blobToCanvas(this.pages[i].blob);
-        pages.push({ canvas, order: i });
-      }
-      const bytes = await processor.generateStapledPDF(pages);
-      const blob = new Blob([bytes as BlobPart], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
+      const processingPages = await buildProcessingPages(this.pages);
+      await downloadStapledPdf(processor, processingPages, filename);
       this.showSuccess = true;
       showToast(`PDF downloaded: ${filename}`, 'success', {
         details: `${this.pages.length} page${this.pages.length !== 1 ? 's' : ''} combined`,
@@ -282,9 +241,6 @@ export class DocumentFlowApp extends LitElement {
         details: msg,
         duration: 10000,
       });
-      this.renderTabletopContent();
-    } finally {
-      if (this.exportBtnEl) this.exportBtnEl.disabled = false;
     }
   }
 
@@ -292,8 +248,10 @@ export class DocumentFlowApp extends LitElement {
     this.pages = [];
     this.showSuccess = false;
     this.errorMessage = null;
-    this.renderTabletopContent();
-    if (this.exportBtnEl) this.exportBtnEl.disabled = true;
+  }
+
+  private onCardStyleChange(e: CustomEvent<CardStyle>): void {
+    this.cardStyle = e.detail;
   }
 
   override firstUpdated(): void {
@@ -321,7 +279,6 @@ export class DocumentFlowApp extends LitElement {
       changed.has('cardStyle')
     ) {
       if (this.tabletopEl) this.renderTabletopContent();
-      if (this.exportBtnEl) this.exportBtnEl.disabled = this.pages.length === 0;
     }
   }
 
@@ -341,48 +298,13 @@ export class DocumentFlowApp extends LitElement {
             class="flex-1 min-h-[50vh] border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center bg-white/80 hover:border-slate-400 transition-colors cursor-pointer overflow-hidden"
           ></div>
         </main>
-        <aside class="w-80 bg-white border-l border-slate-200 p-4 flex flex-col gap-4">
-          <h2 class="font-semibold text-slate-800">Actions</h2>
-          ${this.pages.length > 0 ? html`<p class="text-sm text-slate-600">${this.pages.length} page${this.pages.length !== 1 ? 's' : ''}</p>` : ''}
-          <div class="flex flex-col gap-1">
-            <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Card style</span>
-            <div class="flex gap-1">
-              <button
-                type="button"
-                class="px-3 py-1.5 text-sm rounded-md transition-colors ${this.cardStyle === 'glass' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
-                @click=${() => { this.cardStyle = 'glass'; }}
-              >Glass</button>
-              <button
-                type="button"
-                class="px-3 py-1.5 text-sm rounded-md transition-colors ${this.cardStyle === 'capsule' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
-                @click=${() => { this.cardStyle = 'capsule'; }}
-              >Capsule</button>
-              <button
-                type="button"
-                class="px-3 py-1.5 text-sm rounded-md transition-colors ${this.cardStyle === 'action-first' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
-                @click=${() => { this.cardStyle = 'action-first'; }}
-              >Action</button>
-            </div>
-          </div>
-          ${this.pages.length > 0
-            ? html`<button
-                type="button"
-                class="px-4 py-2 border-2 border-dashed border-slate-400 text-slate-600 rounded-lg hover:border-slate-500 hover:bg-slate-50"
-                @click=${() => this.filePickerEl?.click()}
-              >
-                + Add files
-              </button>`
-            : ''}
-          <button
-            id="export-pdf"
-            class="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            ?disabled=${this.pages.length === 0}
-            @click=${this.handleExport}
-          >
-            Create 1 Combined PDF
-          </button>
-          <p class="text-sm text-slate-500 mt-auto">DocumentFlow Suite v1</p>
-        </aside>
+        <document-flow-sidebar
+          .pageCount=${this.pages.length}
+          .cardStyle=${this.cardStyle}
+          @card-style-change=${this.onCardStyleChange}
+          @add-files=${() => this.filePickerEl?.click()}
+          @export-requested=${this.handleExport}
+        ></document-flow-sidebar>
       </div>
       <export-modal id="export-modal"></export-modal>
       <toast-container></toast-container>
