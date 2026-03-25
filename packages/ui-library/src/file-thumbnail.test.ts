@@ -49,6 +49,21 @@ describe('FileThumbnail', () => {
     expect(rotated).toBe(true);
   });
 
+  it('dispatches preview-open with detail when expand is clicked', async () => {
+    const dataUrl = 'data:image/png;base64,iVBORw0KGgo=';
+    const el = await fixture<FileThumbnail>(html`<file-thumbnail filename="doc.png"></file-thumbnail>`);
+    el.preview = dataUrl;
+    await el.updateComplete;
+    let detail: { preview: string; filename: string } | null = null;
+    el.addEventListener('preview-open', (e) => {
+      detail = (e as CustomEvent<{ preview: string; filename: string }>).detail;
+    });
+    const expandBtn = el.shadowRoot?.querySelector('.action-expand');
+    expect(expandBtn).toBeTruthy();
+    (expandBtn as HTMLElement).click();
+    expect(detail).toEqual({ preview: dataUrl, filename: 'doc.png' });
+  });
+
   it('dispatches delete event when trash action is clicked', async () => {
     const el = await fixture<FileThumbnail>(html`<file-thumbnail filename="x.png"></file-thumbnail>`);
     await el.updateComplete;
