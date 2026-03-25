@@ -4,6 +4,14 @@
 
 export type PageLike = { id: string };
 
+/** Pixels each side of cell midline: keep previous insert-before target while pointer stays in band. */
+const NEUTRAL_BAND_PX = 12;
+
+const FLIP_DURATION_DEFAULT = '0.5s';
+const FLIP_DURATION_PUSHED = '0.55s';
+const FLIP_EASE_DEFAULT = 'cubic-bezier(0.33, 1, 0.68, 1)';
+const FLIP_EASE_PUSHED = 'cubic-bezier(0.33, 1, 0.68, 1)';
+
 /** Thumbnail slots (not placeholder, not dragging) + optional add-card sentinel, in DOM order. */
 function getThumbnailSlots(flex: HTMLElement, ph: HTMLElement): HTMLElement[] {
   return Array.from(flex.children).filter(
@@ -16,11 +24,12 @@ function getThumbnailSlots(flex: HTMLElement, ph: HTMLElement): HTMLElement[] {
   );
 }
 
-/**
- * Workstation-style slot from pointer vs cell rects (grid-safe): insert placeholder before this node.
- * Add-card stays last; dropping is always "before add-card" at end of thumbnails.
- */
-export function resolveInsertBeforeTarget(
+export function getSlotKey(el: HTMLElement): string {
+  if (el.hasAttribute('data-add-card')) return '__add__';
+  return el.getAttribute('data-page-id') ?? '';
+}
+
+function computeRawInsertBeforeTarget(
   flex: HTMLElement,
   ph: HTMLElement,
   clientX: number,
@@ -85,9 +94,40 @@ export function resolveInsertBeforeTarget(
   return { targetEl, pushedEl };
 }
 
+/**
+ * Workstation-style slot from pointer vs cell rects (grid-safe): insert placeholder before this node.
+ * Add-card stays last; dropping is always "before add-card" at end of thumbnails.
+ * Optional `lastStableTarget` + neutral band around cell midline reduces mid-edge oscillation.
+ */
+export function resolveInsertBeforeTarget(
+  flex: HTMLElement,
+  ph: HTMLElement,
+  clientX: number,
+  clientY: number,
+  lastStableTarget?: HTMLElement | null
+): { targetEl: HTMLElement; pushedEl: HTMLElement | null } | null {
+  const raw = computeRawInsertBeforeTarget(flex, ph, clientX, clientY);
+  if (!raw) return null;
+  if (lastStableTarget == null || !flex.contains(lastStableTarget)) return raw;
+  if (raw.targetEl === lastStableTarget) return raw;
+  const pivot = raw.pushedEl;
+  if (!pivot) return raw;
+  const r = pivot.getBoundingClientRect();
+  const midX = r.left + r.width / 2;
+  if (Math.abs(clientX - midX) <= NEUTRAL_BAND_PX) {
+    return { targetEl: lastStableTarget, pushedEl: raw.pushedEl };
+  }
+  return raw;
+}
+
 export class ThumbnailDragController {
   private dragPlaceholder: HTMLElement | null = null;
-  private lastDropIndex = -1;
+  /** Dedupe FLIP when insert slot + hovered card are unchanged (stable keys). */
+  private lastDropFrameKey = '';
+  /** Last committed insert-before target; feeds hysteresis in resolveInsertBeforeTarget. */
+  private lastStableTargetEl: HTMLElement | null = null;
+  private pendingDrag: { flex: HTMLElement; x: number; y: number } | null = null;
+  private dragOverRaf: number | null = null;
 
   ensurePlaceholder(container: HTMLElement, widthPx: number, heightPx: number): HTMLElement {
     if (this.dragPlaceholder && this.dragPlaceholder.parentElement === container) {
@@ -140,7 +180,13 @@ export class ThumbnailDragController {
       'dragend',
       () => {
         flexContainer.removeEventListener('dragover', boundDragover);
-        this.lastDropIndex = -1;
+        if (this.dragOverRaf != null) {
+          cancelAnimationFrame(this.dragOverRaf);
+          this.dragOverRaf = null;
+        }
+        this.pendingDrag = null;
+        this.lastDropFrameKey = '';
+        this.lastStableTargetEl = null;
         this.dragPlaceholder?.remove();
         this.dragPlaceholder = null;
         onDragEnd();
@@ -157,23 +203,57 @@ export class ThumbnailDragController {
   handleDragOver(e: DragEvent, flexContainer: HTMLElement): void {
     e.preventDefault();
     e.dataTransfer!.dropEffect = 'move';
+    this.pendingDrag = { flex: flexContainer, x: e.clientX, y: e.clientY };
+    if (this.dragOverRaf != null) return;
+    this.dragOverRaf = requestAnimationFrame(() => {
+      this.dragOverRaf = null;
+      const p = this.pendingDrag;
+      if (!p) return;
+      this.applyDragOver(p.flex, p.x, p.y);
+    });
+  }
+
+  private applyDragOver(flexContainer: HTMLElement, clientX: number, clientY: number): void {
     const ph = flexContainer.querySelector('#drop-placeholder') as HTMLElement | null;
     if (!ph) return;
 
-    const resolved = resolveInsertBeforeTarget(flexContainer, ph, e.clientX, e.clientY);
+    const resolved = resolveInsertBeforeTarget(
+      flexContainer,
+      ph,
+      clientX,
+      clientY,
+      this.lastStableTargetEl
+    );
     if (!resolved) return;
     const { targetEl, pushedEl } = resolved;
     if (targetEl === ph || !flexContainer.contains(targetEl)) return;
-    if (ph.nextSibling === targetEl) return;
 
-    const slotIndex = Array.from(flexContainer.children).indexOf(targetEl);
-    if (slotIndex === -1) return;
-    if (slotIndex === this.lastDropIndex) return;
-    this.lastDropIndex = slotIndex;
+    const slotKey = getSlotKey(targetEl);
+    const pushedKey = pushedEl ? getSlotKey(pushedEl) : '__none__';
+    const frameKey = `${slotKey}|${pushedKey}`;
+
+    if (ph.nextSibling === targetEl) {
+      if (frameKey === this.lastDropFrameKey) return;
+      flexContainer.querySelectorAll('.card-pushed').forEach((el) => el.classList.remove('card-pushed'));
+      if (pushedEl) pushedEl.classList.add('card-pushed');
+      this.lastDropFrameKey = frameKey;
+      return;
+    }
+
+    if (frameKey === this.lastDropFrameKey) return;
+    this.lastDropFrameKey = frameKey;
 
     const children = Array.from(flexContainer.children).filter(
       (el) => el.getAttribute('data-dragging') !== 'true'
     ) as HTMLElement[];
+    children.forEach((el) => {
+      el.getAnimations?.().forEach((a) => a.cancel());
+      el.style.transition = '';
+      el.style.transitionDelay = '';
+      el.style.transform = '';
+      el.classList.remove('card-pushed');
+    });
+
     const oldRects = new Map<HTMLElement, DOMRect>();
     children.forEach((el) => oldRects.set(el, el.getBoundingClientRect()));
 
@@ -187,6 +267,7 @@ export class ThumbnailDragController {
     flexContainer.querySelectorAll('.card-pushed').forEach((el) => el.classList.remove('card-pushed'));
 
     flexContainer.insertBefore(ph, targetEl);
+    this.lastStableTargetEl = targetEl;
 
     requestAnimationFrame(() => {
       children.forEach((el) => {
@@ -207,8 +288,8 @@ export class ThumbnailDragController {
         requestAnimationFrame(() => {
           const isPushed = pushedEl && el === pushedEl;
           el.style.transition = isPushed
-            ? 'transform 0.32s cubic-bezier(0.2, 0, 0, 1)'
-            : 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+            ? `transform ${FLIP_DURATION_PUSHED} ${FLIP_EASE_PUSHED}`
+            : `transform ${FLIP_DURATION_DEFAULT} ${FLIP_EASE_DEFAULT}`;
           el.style.transitionDelay = `${delayMs}ms`;
           el.style.transform = 'translate(0, 0)';
           const clearTransition = () => {
@@ -246,7 +327,8 @@ export class ThumbnailDragController {
       }
       toIndex = pages.findIndex((p) => p.id === toId);
     }
-    this.lastDropIndex = -1;
+    this.lastDropFrameKey = '';
+    this.lastStableTargetEl = null;
     this.dragPlaceholder?.remove();
     this.dragPlaceholder = null;
     if (!fromId || toIndex === -1) return;
