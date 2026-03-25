@@ -5,6 +5,7 @@ import '@document-flow/ui-library';
 import './export-modal.js';
 import './toast-container.js';
 import './document-flow-sidebar.js';
+import './preview-lightbox.js';
 import type { PageState } from '../app-state.js';
 import { FILE_INPUT_ACCEPT } from '../app-state.js';
 import { ProcessingService } from '../services/processing-service.js';
@@ -24,6 +25,7 @@ import {
   createProgressBar,
   setupTabletopListeners,
   type CardStyle,
+  type PreviewOpenDetail,
 } from '../tabletop/tabletop-render.js';
 import { queryExportModal } from './export-modal-helpers.js';
 
@@ -40,6 +42,7 @@ export class DocumentFlowApp extends LitElement {
   @state() showSuccess = false;
   @state() errorMessage: string | null = null;
   @state() cardStyle: CardStyle = 'glass';
+  @state() private previewLightbox: PreviewOpenDetail | null = null;
 
   @query('#tabletop') tabletopEl!: HTMLElement;
   @query('#file-picker') filePickerEl!: HTMLInputElement;
@@ -153,6 +156,7 @@ export class DocumentFlowApp extends LitElement {
       startNewBatch: () => this.startNewBatch(),
       onRotate: (e: Event) => this.handleRotate(e),
       onDelete: (e: Event) => this.handleDelete(e),
+      onPreviewOpen: (e: CustomEvent<PreviewOpenDetail>) => this.handlePreviewOpen(e),
       onDragStart: (e: DragEvent, fc: HTMLElement) => this.handleDragStart(e, fc),
       onDragOver: (e: DragEvent, fc: HTMLElement) => this.handleDragOver(e, fc),
       onDrop: (e: DragEvent, fc: HTMLElement) => this.handleDrop(e, fc),
@@ -220,6 +224,10 @@ export class DocumentFlowApp extends LitElement {
     const id = (e.target as HTMLElement).closest('[data-page-id]')?.getAttribute('data-page-id');
     if (!id) return;
     this.pages = this.pages.filter((p) => p.id !== id);
+  }
+
+  private handlePreviewOpen(e: CustomEvent<PreviewOpenDetail>): void {
+    this.previewLightbox = e.detail;
   }
 
   private async handleExport(): Promise<void> {
@@ -307,6 +315,14 @@ export class DocumentFlowApp extends LitElement {
         ></document-flow-sidebar>
       </div>
       <export-modal id="export-modal"></export-modal>
+      <preview-lightbox
+        .open=${this.previewLightbox !== null}
+        .src=${this.previewLightbox?.preview ?? ''}
+        .filename=${this.previewLightbox?.filename ?? ''}
+        @close=${() => {
+          this.previewLightbox = null;
+        }}
+      ></preview-lightbox>
       <toast-container></toast-container>
     `;
   }

@@ -5,6 +5,9 @@ const rotateIcon = html`<svg xmlns="http://www.w3.org/2000/svg" width="28" heigh
 
 const trashIcon = html`<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`;
 
+/** Expand / larger preview */
+const expandIcon = html`<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>`;
+
 @customElement('file-thumbnail')
 export class FileThumbnail extends LitElement {
   static styles = css`
@@ -82,6 +85,35 @@ export class FileThumbnail extends LitElement {
     :host(:hover) .thumbnail-actions {
       opacity: 1;
       pointer-events: auto;
+    }
+    .thumbnail-actions-main {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .action-expand {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.95);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #374151;
+    }
+    .action-expand:hover:not(:disabled) {
+      background: white;
+    }
+    .action-expand:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .action-expand:active:not(:disabled) {
+      transform: scale(0.95);
     }
     .action-rotate {
       width: 40px;
@@ -237,6 +269,28 @@ export class FileThumbnail extends LitElement {
   @property({ type: String, attribute: 'card-style' })
   cardStyle: 'glass' | 'capsule' | 'action-first' = 'glass';
 
+  private _emitPreviewOpen() {
+    if (!this.preview) return;
+    this.dispatchEvent(
+      new CustomEvent('preview-open', {
+        bubbles: true,
+        composed: true,
+        detail: { preview: this.preview, filename: this.filename },
+      })
+    );
+  }
+
+  private _onExpand(e: Event) {
+    e.stopPropagation();
+    this._emitPreviewOpen();
+  }
+
+  private _onPreviewDblclick(e: Event) {
+    e.stopPropagation();
+    if (this.status !== 'ready' || !this.preview) return;
+    this._emitPreviewOpen();
+  }
+
   private _onRotate(e: Event) {
     e.stopPropagation();
     this.dispatchEvent(new CustomEvent('rotate', { bubbles: true }));
@@ -256,7 +310,12 @@ export class FileThumbnail extends LitElement {
       <div class="container">
         <div class="preview-wrapper">
           ${this.preview
-            ? html`<img class="preview" src="${this.preview}" alt="${this.filename}" />`
+            ? html`<img
+                class="preview"
+                src="${this.preview}"
+                alt="${this.filename}"
+                @dblclick="${this._onPreviewDblclick}"
+              />`
             : html`<div class="preview preview-empty">No preview</div>`}
           ${this.pageIndex >= 1 ? html`<span class="page-badge">${this.pageIndex}</span>` : ''}
           ${this.status === 'processing'
@@ -274,7 +333,18 @@ export class FileThumbnail extends LitElement {
               : ''}
           ${showOverlay ? html`<div class="filename-overlay">${this.filename}</div>` : ''}
           <div class="thumbnail-actions">
-            <button type="button" class="action-rotate" @click="${this._onRotate}" title="Rotate 90°">${rotateIcon}</button>
+            <div class="thumbnail-actions-main">
+              <button
+                type="button"
+                class="action-expand"
+                @click="${this._onExpand}"
+                ?disabled="${!this.preview || this.status !== 'ready'}"
+                title="Larger preview"
+              >
+                ${expandIcon}
+              </button>
+              <button type="button" class="action-rotate" @click="${this._onRotate}" title="Rotate 90°">${rotateIcon}</button>
+            </div>
             <button type="button" class="action-trash" @click="${this._onDelete}" title="Remove">${trashIcon}</button>
           </div>
         </div>

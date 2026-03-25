@@ -5,12 +5,18 @@
 import { escapeHtml } from '../utils/html.js';
 import type { PageState } from '../app-state.js';
 
+export interface PreviewOpenDetail {
+  preview: string;
+  filename: string;
+}
+
 export interface TabletopEventHandlers {
   dismissError: () => void;
   addFiles: () => void;
   startNewBatch: () => void;
   onRotate: (e: Event) => void;
   onDelete: (e: Event) => void;
+  onPreviewOpen: (e: CustomEvent<PreviewOpenDetail>) => void;
   onDragStart: (e: DragEvent, flexContainer: HTMLElement) => void;
   onDragOver: (e: DragEvent, flexContainer: HTMLElement) => void;
   onDrop: (e: DragEvent, flexContainer: HTMLElement) => void;
@@ -134,6 +140,7 @@ export function attachTabletopEvents(
   container.querySelectorAll('file-thumbnail').forEach((el) => {
     el.addEventListener('rotate', handlers.onRotate);
     el.addEventListener('delete', handlers.onDelete);
+    el.addEventListener('preview-open', handlers.onPreviewOpen as EventListener);
   });
 }
 
