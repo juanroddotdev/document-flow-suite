@@ -177,6 +177,13 @@ export class ThumbnailDragController {
     const oldRects = new Map<HTMLElement, DOMRect>();
     children.forEach((el) => oldRects.set(el, el.getBoundingClientRect()));
 
+    const childListBefore = Array.from(flexContainer.children);
+    const phIdxBefore = childListBefore.indexOf(ph);
+    const idxBefore = new Map<HTMLElement, number>();
+    childListBefore.forEach((el, i) => {
+      if (el instanceof HTMLElement) idxBefore.set(el, i);
+    });
+
     flexContainer.querySelectorAll('.card-pushed').forEach((el) => el.classList.remove('card-pushed'));
 
     flexContainer.insertBefore(ph, targetEl);
@@ -189,7 +196,11 @@ export class ThumbnailDragController {
         const dx = oldR.left - newR.left;
         const dy = oldR.top - newR.top;
         if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+        const elIdx = idxBefore.get(el) ?? 0;
+        const dist = Math.abs(elIdx - phIdxBefore);
+        const delayMs = Math.min(dist * 12, 80);
         el.style.transition = 'none';
+        el.style.transitionDelay = '';
         el.style.transform = `translate(${dx}px, ${dy}px)`;
         if (pushedEl && el === pushedEl) el.classList.add('card-pushed');
         el.offsetHeight;
@@ -198,9 +209,11 @@ export class ThumbnailDragController {
           el.style.transition = isPushed
             ? 'transform 0.32s cubic-bezier(0.2, 0, 0, 1)'
             : 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+          el.style.transitionDelay = `${delayMs}ms`;
           el.style.transform = 'translate(0, 0)';
           const clearTransition = () => {
             el.style.transition = '';
+            el.style.transitionDelay = '';
             el.style.transform = '';
             el.classList.remove('card-pushed');
             el.removeEventListener('transitionend', clearTransition);
