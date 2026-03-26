@@ -70,6 +70,9 @@ export function buildThumbnailsHtml(
   let globalPageIndex = 0;
   const islandSections = islands
     .map((island) => {
+      const n = island.pages.length;
+      const multi = n > 1;
+
       const thumbs = island.pages
         .map((p) => {
           const idx = globalPageIndex++;
@@ -80,11 +83,24 @@ export function buildThumbnailsHtml(
         })
         .join('');
 
+      const stackTotalAttr = multi && n > 4 ? ` data-stack-total="${n}" aria-label="${n} pages in this document"` : '';
+
+      const flexClass = multi
+        ? 'thumbnails-flex island-stack-multi w-fit max-w-full min-w-0'
+        : 'thumbnails-flex flex flex-wrap gap-4 w-fit max-w-full min-w-0 justify-start content-start';
+
+      const inner = `
+      <div class="${flexClass}" data-island-id="${island.id}"${stackTotalAttr}>
+        ${thumbs}
+      </div>`;
+
+      const body = multi
+        ? `<div class="island-stack-wrap relative w-fit max-w-full">${inner}</div>`
+        : inner;
+
       return `
     <section class="island w-fit max-w-full self-start rounded-xl border border-slate-200 bg-slate-50/60 p-2 shadow-sm" data-island-id="${island.id}">
-      <div class="thumbnails-flex flex flex-wrap gap-4 w-fit max-w-full min-w-0 justify-start content-start" data-island-id="${island.id}">
-        ${thumbs}
-      </div>
+      ${body}
     </section>`;
     })
     .join('');

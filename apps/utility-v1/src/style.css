@@ -33,6 +33,11 @@
 .thumbnail-item.drop-bounce {
   animation: dropBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+/* Stacked items use transform for depth; avoid overriding with scale bounce */
+.island-stack-multi .thumbnail-item.drop-bounce {
+  animation: dropBounceStack 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 @keyframes dropBounce {
   0% {
     transform: scale(1.1);
@@ -40,4 +45,96 @@
   100% {
     transform: scale(1);
   }
+}
+
+@keyframes dropBounceStack {
+  0% {
+    filter: brightness(1.12) drop-shadow(0 4px 12px rgb(37 99 235 / 0.35));
+  }
+  100% {
+    filter: brightness(1) drop-shadow(0 1px 2px rgb(0 0 0 / 0.06));
+  }
+}
+
+/* Multi-page island: up to 4 thumbnails stacked (offset down-right); page 1 on top */
+.island-stack-multi {
+  --stack-face: 160px;
+  --stack-step: 8px;
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  min-width: calc(var(--stack-face) + var(--stack-step) * 3);
+  min-height: calc(var(--stack-face) + var(--stack-step) * 3);
+  width: max-content;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.island-stack-multi > .thumbnail-item:nth-child(-n + 4) {
+  position: absolute;
+  left: 0;
+  top: 0;
+  flex-shrink: 0;
+}
+
+.island-stack-multi > .thumbnail-item:nth-child(1) {
+  transform: translate(0, 0);
+  z-index: 44;
+}
+.island-stack-multi > .thumbnail-item:nth-child(2) {
+  transform: translate(var(--stack-step), var(--stack-step));
+  z-index: 43;
+}
+.island-stack-multi > .thumbnail-item:nth-child(3) {
+  transform: translate(calc(var(--stack-step) * 2), calc(var(--stack-step) * 2));
+  z-index: 42;
+}
+.island-stack-multi > .thumbnail-item:nth-child(4) {
+  transform: translate(calc(var(--stack-step) * 3), calc(var(--stack-step) * 3));
+  z-index: 41;
+}
+
+/* Pages 5+ flow below the stack (still same flex parent for drag) */
+.island-stack-multi > .thumbnail-item:nth-child(n + 5) {
+  position: relative;
+  float: left;
+  clear: none;
+  margin-left: 0.5rem;
+  margin-top: 0;
+  z-index: 1;
+}
+
+.island-stack-multi > .thumbnail-item:nth-child(5) {
+  clear: left;
+  margin-left: 0;
+  margin-top: calc(var(--stack-face) + var(--stack-step) * 3 + 0.75rem);
+}
+
+.island-stack-multi::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Total page count when more than 4 pages (stack shows first 4) */
+.island-stack-multi[data-stack-total]::before {
+  content: attr(data-stack-total);
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 50;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  padding: 0 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgb(37 99 235);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+  pointer-events: none;
 }
