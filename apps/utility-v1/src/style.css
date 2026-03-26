@@ -2,6 +2,8 @@
 @source "../*.html";
 @source "./**/*.ts";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* UI Polish Standards (2026) */
 .thumbnail-item {
   transition: transform 0.5s cubic-bezier(0.33, 1, 0.68, 1), box-shadow 0.5s cubic-bezier(0.33, 1, 0.68, 1);
@@ -15,6 +17,10 @@
 
 .add-card:hover {
   background-color: rgb(241 245 249);
+}
+
+.dark .add-card:hover {
+  background-color: rgb(30 41 59);
 }
 
 /* Insertion line: shows where the dragged item will land (Notion-style) */

@@ -31,10 +31,20 @@ export class ToastContainer extends LitElement {
       border: 1px solid #86efac;
       color: #166534;
     }
+    :host-context(.dark) .toast--success {
+      background: #14532d;
+      border-color: #22c55e;
+      color: #bbf7d0;
+    }
     .toast--error {
       background: #fef2f2;
       border: 1px solid #fecaca;
       color: #991b1b;
+    }
+    :host-context(.dark) .toast--error {
+      background: #450a0a;
+      border-color: #f87171;
+      color: #fecaca;
     }
     .toast-message {
       font-size: 0.9375rem;

@@ -292,7 +292,7 @@ export class DocumentFlowApp extends LitElement {
 
   override render() {
     return html`
-      <div class="flex h-screen bg-slate-100">
+      <div class="flex h-screen bg-slate-100 dark:bg-slate-950 transition-colors">
         <main class="flex-1 flex flex-col p-8 min-w-0">
           <input
             type="file"
@@ -303,7 +303,7 @@ export class DocumentFlowApp extends LitElement {
           />
           <div
             id="tabletop"
-            class="flex-1 min-h-[50vh] border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center bg-white/80 hover:border-slate-400 transition-colors cursor-pointer overflow-hidden"
+            class="flex-1 min-h-[50vh] border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl flex items-center justify-center bg-white/80 dark:bg-slate-900/80 hover:border-slate-400 dark:hover:border-slate-500 transition-colors cursor-pointer overflow-hidden"
           ></div>
         </main>
         <document-flow-sidebar
