@@ -94,28 +94,6 @@
   z-index: 41;
 }
 
-/* Pages 5+ flow below the stack (still same flex parent for drag) */
-.island-stack-multi > .thumbnail-item:nth-child(n + 5) {
-  position: relative;
-  float: left;
-  clear: none;
-  margin-left: 0.5rem;
-  margin-top: 0;
-  z-index: 1;
-}
-
-.island-stack-multi > .thumbnail-item:nth-child(5) {
-  clear: left;
-  margin-left: 0;
-  margin-top: calc(var(--stack-face) + var(--stack-step) * 3 + 0.75rem);
-}
-
-.island-stack-multi::after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
 /* Total page count when more than 4 pages (stack shows first 4) */
 .island-stack-multi[data-stack-total]::before {
   content: attr(data-stack-total);
@@ -137,4 +115,47 @@
   line-height: 1;
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
   pointer-events: none;
+}
+
+/* Expanded island: max 4 columns, then wrap */
+.island-stack-expanded {
+  display: grid;
+  grid-template-columns: repeat(4, 160px);
+  gap: 1rem;
+  justify-content: start;
+  align-content: start;
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.island-expand-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(203 213 225);
+  background: white;
+  color: rgb(51 65 85);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.island-expand-toggle:hover {
+  background: rgb(248 250 252);
+  border-color: rgb(148 163 184);
+  color: rgb(30 41 59);
+}
+
+.island-expand-toggle:focus-visible {
+  outline: 2px solid rgb(37 99 235);
+  outline-offset: 2px;
+}
+
+.island-stack-wrap--with-toggle .island-expand-toggle {
+  align-self: center;
 }

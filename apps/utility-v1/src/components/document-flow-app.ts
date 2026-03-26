@@ -85,10 +85,32 @@ export class DocumentFlowApp extends LitElement {
     });
   }
 
+  /** Pages participating in drag for this island (collapsed >4 shows only first 4). */
+  private getPagesForDrag(island: IslandState) {
+    if (island.pages.length > 4 && island.expanded !== true) {
+      return island.pages.slice(0, 4);
+    }
+    return island.pages;
+  }
+
+  private toggleIslandExpand(islandId: string): void {
+    this.islands = this.islands.map((i) =>
+      i.id === islandId ? { ...i, expanded: !i.expanded } : i
+    );
+  }
+
   /** Reorder pages within one island after drag-drop. */
   private applyReorderInIsland(islandId: string, fromIndex: number, toIndex: number): void {
     this.islands = this.islands.map((island) => {
       if (island.id !== islandId) return island;
+      const n = island.pages.length;
+      if (n > 4 && island.expanded !== true) {
+        const head = [...island.pages.slice(0, 4)];
+        const tail = island.pages.slice(4);
+        const [removed] = head.splice(fromIndex, 1);
+        head.splice(toIndex, 0, removed);
+        return { ...island, pages: [...head, ...tail] };
+      }
       const pages = [...island.pages];
       const [removed] = pages.splice(fromIndex, 1);
       pages.splice(toIndex, 0, removed);
@@ -181,6 +203,7 @@ export class DocumentFlowApp extends LitElement {
       onDragStart: (e: DragEvent, fc: HTMLElement, islandId: string) => this.handleDragStart(e, fc, islandId),
       onDragOver: (e: DragEvent, fc: HTMLElement, islandId: string) => this.handleDragOver(e, fc, islandId),
       onDrop: (e: DragEvent, fc: HTMLElement, islandId: string) => this.handleDrop(e, fc, islandId),
+      onToggleIslandExpand: (id: string) => this.toggleIslandExpand(id),
     };
   }
 
@@ -212,7 +235,7 @@ export class DocumentFlowApp extends LitElement {
     this.dragController.handleDragStart(
       e,
       flexContainer,
-      island.pages,
+      this.getPagesForDrag(island),
       () => this.renderTabletopContent(),
       (fromIndex, toIndex) => this.applyReorderInIsland(islandId, fromIndex, toIndex)
     );
@@ -225,7 +248,7 @@ export class DocumentFlowApp extends LitElement {
   private handleDrop(e: DragEvent, flexContainer: HTMLElement, islandId: string): void {
     const island = this.islands.find((i) => i.id === islandId);
     if (!island) return;
-    this.dragController.handleDrop(e, flexContainer, island.pages, (fromIndex, toIndex) =>
+    this.dragController.handleDrop(e, flexContainer, this.getPagesForDrag(island), (fromIndex, toIndex) =>
       this.applyReorderInIsland(islandId, fromIndex, toIndex)
     );
   }
@@ -252,6 +275,10 @@ export class DocumentFlowApp extends LitElement {
       .map((island, idx) => {
         if (idx !== loc.islandIndex) return island;
         const pages = island.pages.filter((p) => p.id !== id);
+        if (pages.length <= 4) {
+          const { expanded: _e, ...rest } = island;
+          return { ...rest, pages };
+        }
         return { ...island, pages };
       })
       .filter((island) => island.pages.length > 0);

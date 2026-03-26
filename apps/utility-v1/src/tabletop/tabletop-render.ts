@@ -3,7 +3,8 @@
  */
 
 import { escapeHtml } from '../utils/html.js';
-import type { IslandState } from '../app-state.js';
+import type { IslandState, PageState } from '../app-state.js';
+import { flattenPagesInIslandOrder } from '../app-state.js';
 
 export interface PreviewOpenDetail {
   preview: string;
@@ -20,7 +21,14 @@ export interface TabletopEventHandlers {
   onDragStart: (e: DragEvent, flexContainer: HTMLElement, islandId: string) => void;
   onDragOver: (e: DragEvent, flexContainer: HTMLElement, islandId: string) => void;
   onDrop: (e: DragEvent, flexContainer: HTMLElement, islandId: string) => void;
+  onToggleIslandExpand: (islandId: string) => void;
 }
+
+/** Expand / show all pages (collapsed stack with >4 pages). */
+const ICON_EXPAND = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>`;
+
+/** Collapse back to stacked first four. */
+const ICON_COLLAPSE = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v3a2 2 0 0 0 2 2h3a2 2 0 0 0 2-2V3m0 18v-3a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v3M3 8h3a2 2 0 0 0 2-2V3m18 0h-3a2 2 0 0 0-2 2v3"/></svg>`;
 
 function buildErrorBanner(errorMessage: string): string {
   return `<div class="flex items-center justify-between gap-4 px-4 py-2 bg-red-50 border-b border-red-200 text-red-800 text-sm" role="alert">
@@ -60,47 +68,99 @@ export function buildSuccessHtml(errorBanner?: string): string {
 
 export type CardStyle = 'glass' | 'capsule' | 'action-first';
 
+function buildThumbItems(
+  pages: PageState[],
+  islandId: string,
+  cardStyle: CardStyle,
+  globalIdxByPageId: Map<string, number>
+): string {
+  return pages
+    .map((p) => {
+      const idx = globalIdxByPageId.get(p.id) ?? 0;
+      return `
+    <div class="thumbnail-item cursor-grab flex-shrink-0" data-page-id="${p.id}" data-island-id="${islandId}" data-index="${idx}" draggable="true">
+      <file-thumbnail data-page-id="${p.id}" status="${p.status}" card-style="${cardStyle}"></file-thumbnail>
+    </div>`;
+    })
+    .join('');
+}
+
 export function buildThumbnailsHtml(
   islands: IslandState[],
   errorBanner?: string,
   cardStyle: CardStyle = 'glass'
 ): string {
   const banner = errorBanner ?? '';
+  const flat = flattenPagesInIslandOrder(islands);
+  const globalIdxByPageId = new Map(flat.map((p, i) => [p.id, i]));
 
-  let globalPageIndex = 0;
   const islandSections = islands
     .map((island) => {
       const n = island.pages.length;
-      const multi = n > 1;
+      const expanded = island.expanded === true;
 
-      const thumbs = island.pages
-        .map((p) => {
-          const idx = globalPageIndex++;
-          return `
-    <div class="thumbnail-item cursor-grab flex-shrink-0" data-page-id="${p.id}" data-island-id="${island.id}" data-index="${idx}" draggable="true">
-      <file-thumbnail data-page-id="${p.id}" status="${p.status}" card-style="${cardStyle}"></file-thumbnail>
-    </div>`;
-        })
-        .join('');
-
-      const stackTotalAttr = multi && n > 4 ? ` data-stack-total="${n}" aria-label="${n} pages in this document"` : '';
-
-      const flexClass = multi
-        ? 'thumbnails-flex island-stack-multi w-fit max-w-full min-w-0'
-        : 'thumbnails-flex flex flex-wrap gap-4 w-fit max-w-full min-w-0 justify-start content-start';
-
-      const inner = `
-      <div class="${flexClass}" data-island-id="${island.id}"${stackTotalAttr}>
+      /** Single page: simple flex tile */
+      if (n === 1) {
+        const thumbs = buildThumbItems(island.pages, island.id, cardStyle, globalIdxByPageId);
+        const inner = `
+      <div class="thumbnails-flex flex flex-wrap gap-4 w-fit max-w-full min-w-0 justify-start content-start" data-island-id="${island.id}">
         ${thumbs}
       </div>`;
+        return `
+    <section class="island w-fit max-w-full self-start rounded-xl border border-slate-200 bg-slate-50/60 p-2 shadow-sm" data-island-id="${island.id}">
+      ${inner}
+    </section>`;
+      }
 
-      const body = multi
-        ? `<div class="island-stack-wrap relative w-fit max-w-full">${inner}</div>`
-        : inner;
+      /** 2–4 pages: stacked deck (all visible) */
+      if (n <= 4) {
+        const thumbs = buildThumbItems(island.pages, island.id, cardStyle, globalIdxByPageId);
+        const inner = `
+      <div class="thumbnails-flex island-stack-multi w-fit max-w-full min-w-0" data-island-id="${island.id}">
+        ${thumbs}
+      </div>`;
+        return `
+    <section class="island w-fit max-w-full self-start rounded-xl border border-slate-200 bg-slate-50/60 p-2 shadow-sm" data-island-id="${island.id}">
+      <div class="island-stack-wrap relative w-fit max-w-full">${inner}</div>
+    </section>`;
+      }
 
+      /** 5+ pages, collapsed: first 4 stacked + expand */
+      if (!expanded) {
+        const visible = island.pages.slice(0, 4);
+        const thumbs = buildThumbItems(visible, island.id, cardStyle, globalIdxByPageId);
+        const stackTotalAttr = ` data-stack-total="${n}" aria-label="${n} pages in this document"`;
+        const expandBtn = `
+      <button type="button" class="island-expand-toggle" data-toggle-island-expand="${island.id}" aria-expanded="false" aria-label="Show all ${n} pages">
+        ${ICON_EXPAND}
+        <span class="island-expand-toggle-label">Show all</span>
+      </button>`;
+        const inner = `
+      <div class="thumbnails-flex island-stack-multi w-fit max-w-full min-w-0" data-island-id="${island.id}"${stackTotalAttr}>
+        ${thumbs}
+      </div>
+      ${expandBtn}`;
+        return `
+    <section class="island w-fit max-w-full self-start rounded-xl border border-slate-200 bg-slate-50/60 p-2 shadow-sm" data-island-id="${island.id}">
+      <div class="island-stack-wrap island-stack-wrap--with-toggle relative w-fit max-w-full flex flex-col items-center gap-2">${inner}</div>
+    </section>`;
+      }
+
+      /** 5+ pages, expanded: 4-column grid + collapse */
+      const thumbs = buildThumbItems(island.pages, island.id, cardStyle, globalIdxByPageId);
+      const collapseBtn = `
+      <button type="button" class="island-expand-toggle" data-toggle-island-expand="${island.id}" aria-expanded="true" aria-label="Show stacked preview only">
+        ${ICON_COLLAPSE}
+        <span class="island-expand-toggle-label">Stack</span>
+      </button>`;
+      const inner = `
+      <div class="thumbnails-flex island-stack-expanded w-fit max-w-full min-w-0" data-island-id="${island.id}">
+        ${thumbs}
+      </div>
+      ${collapseBtn}`;
       return `
     <section class="island w-fit max-w-full self-start rounded-xl border border-slate-200 bg-slate-50/60 p-2 shadow-sm" data-island-id="${island.id}">
-      ${body}
+      <div class="island-stack-wrap island-stack-wrap--with-toggle relative w-fit max-w-full flex flex-col items-stretch gap-2">${inner}</div>
     </section>`;
     })
     .join('');
@@ -142,14 +202,22 @@ export function attachTabletopEvents(
 
   container.querySelector('#start-new-batch')?.addEventListener('click', handlers.startNewBatch);
 
-  const flatPages = islands.flatMap((i) => i.pages);
-  container.querySelectorAll('file-thumbnail').forEach((el, i) => {
-    const p = flatPages[i];
-    if (p) {
-      el.setAttribute('preview', p.previewDataUrl ?? '');
-      el.setAttribute('filename', p.filename);
-      el.setAttribute('page-index', String(i + 1));
-    }
+  const flatPages = flattenPagesInIslandOrder(islands);
+  const pageById = new Map(flatPages.map((p, i) => [p.id, { page: p, globalIndex: i }]));
+  container.querySelectorAll('file-thumbnail').forEach((el) => {
+    const id = el.getAttribute('data-page-id');
+    const entry = id ? pageById.get(id) : undefined;
+    if (!entry) return;
+    el.setAttribute('preview', entry.page.previewDataUrl ?? '');
+    el.setAttribute('filename', entry.page.filename);
+    el.setAttribute('page-index', String(entry.globalIndex + 1));
+  });
+
+  container.querySelectorAll('[data-toggle-island-expand]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const id = (e.currentTarget as HTMLElement).getAttribute('data-toggle-island-expand');
+      if (id) handlers.onToggleIslandExpand(id);
+    });
   });
 
   container.querySelectorAll('.thumbnails-flex[data-island-id]').forEach((flexEl) => {

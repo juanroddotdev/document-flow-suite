@@ -17,6 +17,8 @@ export interface IslandState {
   /** Display label, usually source filename */
   label: string;
   pages: PageState[];
+  /** When pages.length > 4, expanded shows full grid; collapsed shows stacked first 4 only. */
+  expanded?: boolean;
 }
 
 export function flattenPagesInIslandOrder(islands: IslandState[]): PageState[] {
