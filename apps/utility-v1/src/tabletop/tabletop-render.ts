@@ -82,7 +82,6 @@ export function buildThumbnailsHtml(
 
       return `
     <section class="island w-fit max-w-full self-start rounded-xl border border-slate-200 bg-slate-50/60 p-2 shadow-sm" data-island-id="${island.id}">
-      <h3 class="text-xs font-medium text-slate-600 mb-2 px-0.5 max-w-full truncate" title="${escapeHtml(island.label)}">${escapeHtml(island.label)}</h3>
       <div class="thumbnails-flex flex flex-wrap gap-4 w-fit max-w-full min-w-0 justify-start content-start" data-island-id="${island.id}">
         ${thumbs}
       </div>
