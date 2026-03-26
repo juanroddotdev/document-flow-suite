@@ -66,12 +66,6 @@ export function buildThumbnailsHtml(
   cardStyle: CardStyle = 'glass'
 ): string {
   const banner = errorBanner ?? '';
-  /** Thumbnails inside each island: same auto-fill grid as before. */
-  const thumbGridStyle =
-    'grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); justify-items: center; align-content: start;';
-  /** Outer layout: islands (and add card) as tiles on one responsive grid. */
-  const islandsGridStyle =
-    'grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); align-content: start;';
 
   let globalPageIndex = 0;
   const islandSections = islands
@@ -80,16 +74,16 @@ export function buildThumbnailsHtml(
         .map((p) => {
           const idx = globalPageIndex++;
           return `
-    <div class="thumbnail-item cursor-grab" data-page-id="${p.id}" data-island-id="${island.id}" data-index="${idx}" draggable="true">
+    <div class="thumbnail-item cursor-grab flex-shrink-0" data-page-id="${p.id}" data-island-id="${island.id}" data-index="${idx}" draggable="true">
       <file-thumbnail data-page-id="${p.id}" status="${p.status}" card-style="${cardStyle}"></file-thumbnail>
     </div>`;
         })
         .join('');
 
       return `
-    <section class="island min-w-0 self-start w-full rounded-xl border border-slate-200 bg-slate-50/60 p-3 shadow-sm" data-island-id="${island.id}">
-      <h3 class="text-sm font-medium text-slate-700 mb-3 px-1 truncate" title="${escapeHtml(island.label)}">${escapeHtml(island.label)}</h3>
-      <div class="thumbnails-flex grid gap-4 w-full min-w-0 overflow-auto" data-island-id="${island.id}" style="${thumbGridStyle}">
+    <section class="island w-fit max-w-full self-start rounded-xl border border-slate-200 bg-slate-50/60 p-2 shadow-sm" data-island-id="${island.id}">
+      <h3 class="text-xs font-medium text-slate-600 mb-2 px-0.5 max-w-full truncate" title="${escapeHtml(island.label)}">${escapeHtml(island.label)}</h3>
+      <div class="thumbnails-flex flex flex-wrap gap-4 w-fit max-w-full min-w-0 justify-start content-start" data-island-id="${island.id}">
         ${thumbs}
       </div>
     </section>`;
@@ -97,7 +91,7 @@ export function buildThumbnailsHtml(
     .join('');
 
   const addCardHtml = `
-    <div data-add-card class="add-card flex flex-col items-center justify-center w-full min-w-0 self-start min-h-[160px] border-2 border-dashed border-slate-400 rounded-xl bg-slate-50 hover:border-slate-500 hover:bg-slate-100 cursor-pointer transition-all duration-200" role="button" tabindex="0" aria-label="Add more files">
+    <div data-add-card class="add-card flex flex-shrink-0 flex-col items-center justify-center w-[160px] h-[160px] self-start border-2 border-dashed border-slate-400 rounded-xl bg-slate-50 hover:border-slate-500 hover:bg-slate-100 cursor-pointer transition-all duration-200" role="button" tabindex="0" aria-label="Add more files">
       <span class="text-3xl text-slate-500">+</span>
       <span class="text-sm text-slate-600 mt-1">Add files</span>
     </div>
@@ -106,7 +100,7 @@ export function buildThumbnailsHtml(
   return (
     banner +
     `
-    <div class="islands-stack grid gap-6 p-4 overflow-auto w-full max-h-full" style="${islandsGridStyle}">
+    <div class="islands-stack flex flex-wrap gap-6 items-start content-start p-4 overflow-auto w-full max-h-full">
       ${islandSections}
       ${addCardHtml}
     </div>
