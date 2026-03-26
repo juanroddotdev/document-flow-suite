@@ -31,9 +31,9 @@ const ICON_EXPAND = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="
 const ICON_COLLAPSE = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v3a2 2 0 0 0 2 2h3a2 2 0 0 0 2-2V3m0 18v-3a2 2 0 0 0-2-2h-3a2 2 0 0 0-2 2v3M3 8h3a2 2 0 0 0 2-2V3m18 0h-3a2 2 0 0 0-2 2v3"/></svg>`;
 
 function buildErrorBanner(errorMessage: string): string {
-  return `<div class="flex items-center justify-between gap-4 px-4 py-2 bg-red-50 border-b border-red-200 text-red-800 text-sm" role="alert">
+  return `<div class="flex items-center justify-between gap-4 px-4 py-2 bg-red-50 dark:bg-red-950/50 border-b border-red-200 dark:border-red-800/80 text-red-800 dark:text-red-200 text-sm" role="alert">
     <span>${escapeHtml(errorMessage)}</span>
-    <button type="button" data-dismiss-error class="text-red-600 hover:text-red-800 font-medium" aria-label="Dismiss">Dismiss</button>
+    <button type="button" data-dismiss-error class="text-red-600 dark:text-red-300 hover:text-red-800 dark:hover:text-red-100 font-medium" aria-label="Dismiss">Dismiss</button>
   </div>`;
 }
 
@@ -42,10 +42,10 @@ export function buildEmptyDropzoneHtml(errorBanner?: string): string {
   return (
     banner +
     `
-    <div class="text-center text-slate-500 empty-dropzone-content">
-      <p class="text-xl font-semibold text-slate-600">Drop Files Anywhere</p>
+    <div class="text-center text-slate-500 dark:text-slate-400 empty-dropzone-content">
+      <p class="text-xl font-semibold text-slate-600 dark:text-slate-200">Drop Files Anywhere</p>
       <p class="text-sm mt-2">or click to browse</p>
-      <p class="text-xs mt-3 text-slate-400">HEIC, TIFF, PNG, JPG, PDF</p>
+      <p class="text-xs mt-3 text-slate-400 dark:text-slate-500">HEIC, TIFF, PNG, JPG, PDF</p>
     </div>
   `
   );
@@ -57,8 +57,8 @@ export function buildSuccessHtml(errorBanner?: string): string {
     banner +
     `
     <div class="flex flex-col items-center justify-center gap-4 text-center p-8">
-      <p class="text-xl font-semibold text-slate-700">Download Started!</p>
-      <button type="button" id="start-new-batch" class="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700">
+      <p class="text-xl font-semibold text-slate-700 dark:text-slate-200">Download Started!</p>
+      <button type="button" id="start-new-batch" class="px-4 py-2 bg-slate-800 dark:bg-slate-200 dark:text-slate-900 text-white rounded-lg hover:bg-slate-700 dark:hover:bg-white">
         Start New Batch
       </button>
     </div>
@@ -107,7 +107,7 @@ export function buildThumbnailsHtml(
         ${thumbs}
       </div>`;
         return `
-    <section class="island w-fit max-w-full self-start rounded-xl border border-slate-200 bg-slate-50/60 p-2 shadow-sm" data-island-id="${island.id}">
+    <section class="island w-fit max-w-full self-start rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-900/50 p-2 shadow-sm" data-island-id="${island.id}">
       ${inner}
     </section>`;
       }
@@ -120,7 +120,7 @@ export function buildThumbnailsHtml(
         ${thumbs}
       </div>`;
         return `
-    <section class="island w-fit max-w-full self-start rounded-xl border border-slate-200 bg-slate-50/60 p-2 shadow-sm" data-island-id="${island.id}">
+    <section class="island w-fit max-w-full self-start rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-900/50 p-2 shadow-sm" data-island-id="${island.id}">
       <div class="island-stack-wrap relative w-fit max-w-full">${inner}</div>
     </section>`;
       }
@@ -141,7 +141,7 @@ export function buildThumbnailsHtml(
       </div>
       ${expandBtn}`;
         return `
-    <section class="island w-fit max-w-full self-start rounded-xl border border-slate-200 bg-slate-50/60 p-2 shadow-sm" data-island-id="${island.id}">
+    <section class="island w-fit max-w-full self-start rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-900/50 p-2 shadow-sm" data-island-id="${island.id}">
       <div class="island-stack-wrap island-stack-wrap--with-toggle relative w-fit max-w-full flex flex-col items-center gap-2">${inner}</div>
     </section>`;
       }
@@ -159,16 +159,16 @@ export function buildThumbnailsHtml(
       </div>
       ${collapseBtn}`;
       return `
-    <section class="island w-fit max-w-full self-start rounded-xl border border-slate-200 bg-slate-50/60 p-2 shadow-sm" data-island-id="${island.id}">
+    <section class="island w-fit max-w-full self-start rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50/60 dark:bg-slate-900/50 p-2 shadow-sm" data-island-id="${island.id}">
       <div class="island-stack-wrap island-stack-wrap--with-toggle relative w-fit max-w-full flex flex-col items-stretch gap-2">${inner}</div>
     </section>`;
     })
     .join('');
 
   const addCardHtml = `
-    <div data-add-card class="add-card flex flex-shrink-0 flex-col items-center justify-center w-[160px] h-[160px] self-start border-2 border-dashed border-slate-400 rounded-xl bg-slate-50 hover:border-slate-500 hover:bg-slate-100 cursor-pointer transition-all duration-200" role="button" tabindex="0" aria-label="Add more files">
-      <span class="text-3xl text-slate-500">+</span>
-      <span class="text-sm text-slate-600 mt-1">Add files</span>
+    <div data-add-card class="add-card flex flex-shrink-0 flex-col items-center justify-center w-[160px] h-[160px] self-start border-2 border-dashed border-slate-400 dark:border-slate-500 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:border-slate-500 dark:hover:border-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-all duration-200" role="button" tabindex="0" aria-label="Add more files">
+      <span class="text-3xl text-slate-500 dark:text-slate-400">+</span>
+      <span class="text-sm text-slate-600 dark:text-slate-300 mt-1">Add files</span>
     </div>
   `;
 
@@ -267,17 +267,17 @@ export function setupTabletopListeners(
   tabletop.addEventListener('dragover', (e) => {
     e.preventDefault();
     if (!(e as DragEvent).dataTransfer?.types.includes('text/plain')) {
-      tabletop.classList.add('border-slate-500', 'bg-slate-50');
+      tabletop.classList.add('border-slate-500', 'dark:border-slate-400', 'bg-slate-50', 'dark:bg-slate-900/60');
     }
   });
   tabletop.addEventListener('dragleave', (e) => {
     if (!tabletop.contains((e as DragEvent).relatedTarget as Node)) {
-      tabletop.classList.remove('border-slate-500', 'bg-slate-50');
+      tabletop.classList.remove('border-slate-500', 'dark:border-slate-400', 'bg-slate-50', 'dark:bg-slate-900/60');
     }
   });
   tabletop.addEventListener('drop', async (e: Event) => {
     const ev = e as DragEvent;
-    tabletop.classList.remove('border-slate-500', 'bg-slate-50');
+    tabletop.classList.remove('border-slate-500', 'dark:border-slate-400', 'bg-slate-50', 'dark:bg-slate-900/60');
     const files = ev.dataTransfer?.files;
     if (!files?.length) return;
     ev.preventDefault();
@@ -295,11 +295,12 @@ export function createProgressBar(container: HTMLElement): {
   update: (p: ProcessProgress) => void;
 } {
   const progressWrap = document.createElement('div');
-  progressWrap.className = 'w-full px-4 py-2 bg-slate-100 border-b border-slate-200';
+  progressWrap.className =
+    'w-full px-4 py-2 bg-slate-100 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-700';
   progressWrap.innerHTML = `
-    <p class="text-sm font-medium text-slate-600 progress-text">Processing…</p>
-    <div class="mt-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-      <div class="progress-fill h-full bg-slate-600 rounded-full transition-all duration-200" style="width: 0%"></div>
+    <p class="text-sm font-medium text-slate-600 dark:text-slate-300 progress-text">Processing…</p>
+    <div class="mt-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+      <div class="progress-fill h-full bg-slate-600 dark:bg-slate-300 rounded-full transition-all duration-200" style="width: 0%"></div>
     </div>
   `;
   const progressText = progressWrap.querySelector('.progress-text') as HTMLElement;

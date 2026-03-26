@@ -23,11 +23,18 @@ export class ExportModal extends LitElement {
       width: 100%;
       max-width: 28rem;
     }
+    :host-context(.dark) .card {
+      background: #1e293b;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+    }
     .heading {
       font-size: 1.125rem;
       font-weight: 600;
       color: #1e293b;
       margin-bottom: 0.5rem;
+    }
+    :host-context(.dark) .heading {
+      color: #f1f5f9;
     }
     input {
       width: 100%;
@@ -35,6 +42,12 @@ export class ExportModal extends LitElement {
       border: 1px solid #cbd5e1;
       border-radius: 0.5rem;
       margin-bottom: 1rem;
+      box-sizing: border-box;
+    }
+    :host-context(.dark) input {
+      background: #0f172a;
+      border-color: #475569;
+      color: #f1f5f9;
     }
     input:focus {
       outline: none;
@@ -53,8 +66,16 @@ export class ExportModal extends LitElement {
       color: #334155;
       background: white;
     }
+    :host-context(.dark) .btn-cancel {
+      border-color: #475569;
+      color: #e2e8f0;
+      background: #0f172a;
+    }
     .btn-cancel:hover {
       background: #f8fafc;
+    }
+    :host-context(.dark) .btn-cancel:hover {
+      background: #334155;
     }
     .btn-export {
       padding: 0.5rem 1rem;
@@ -63,8 +84,15 @@ export class ExportModal extends LitElement {
       border-radius: 0.5rem;
       border: none;
     }
+    :host-context(.dark) .btn-export {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
     .btn-export:hover {
       background: #334155;
+    }
+    :host-context(.dark) .btn-export:hover {
+      background: white;
     }
   `;
 

@@ -2,6 +2,8 @@
 @source "../*.html";
 @source "./**/*.ts";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* UI Polish Standards (2026) */
 .thumbnail-item {
   transition: transform 0.5s cubic-bezier(0.33, 1, 0.68, 1), box-shadow 0.5s cubic-bezier(0.33, 1, 0.68, 1);
@@ -15,6 +17,10 @@
 
 .add-card:hover {
   background-color: rgb(241 245 249);
+}
+
+.dark .add-card:hover {
+  background-color: rgb(30 41 59);
 }
 
 /* Insertion line: shows where the dragged item will land (Notion-style) */
@@ -154,6 +160,18 @@
 .island-expand-toggle:focus-visible {
   outline: 2px solid rgb(37 99 235);
   outline-offset: 2px;
+}
+
+.dark .island-expand-toggle {
+  border-color: rgb(71 85 105);
+  background: rgb(30 41 59);
+  color: rgb(226 232 240);
+}
+
+.dark .island-expand-toggle:hover {
+  background: rgb(51 65 85);
+  border-color: rgb(100 116 139);
+  color: rgb(241 245 249);
 }
 
 .island-stack-wrap--with-toggle .island-expand-toggle {
